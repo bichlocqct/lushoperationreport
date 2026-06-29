@@ -1384,4 +1384,146 @@ ul.space-y-3 li {
   color: var(--color-black) !important;
 }
 
+/* --- Custom Redesign for Shelves Grid, Work Goals and Responsibilities --- */
+.shelves-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .shelves-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.goals-card {
+  background-color: #f0fdf4 !important; /* Solid light emerald background */
+  border: 1px solid #bbf7d0 !important; /* Emerald-200 border */
+}
+
+.goal-subtitle {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #047857; /* Emerald-700 */
+  margin-top: 0.25rem;
+}
+
+.goals-list {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.75rem !important;
+}
+
+.goals-list li {
+  list-style: none !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 0.75rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 500 !important;
+  color: #374151 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+.goals-list li .check-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 1.25rem !important;
+  height: 1.25rem !important;
+  border-radius: 4px !important;
+  background-color: #059669 !important; /* Solid Green check box */
+  color: #ffffff !important;
+  font-size: 0.75rem !important;
+  font-weight: 800 !important;
+  flex-shrink: 0 !important;
+  margin-top: 0.1rem !important;
+}
+
+.responsibilities-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding-top: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .responsibilities-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.responsibility-card {
+  border: 1px solid var(--border-medium) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 1.5rem !important;
+  background-color: #ffffff !important;
+  box-shadow: var(--shadow-sm) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.responsibility-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--shadow-md) !important;
+  border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+.responsibility-card ul.list-disc {
+  list-style-type: disc !important;
+  padding-left: 1.25rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.5rem !important;
+  margin: 0 !important;
+}
+
+.responsibility-card li {
+  list-style-type: disc !important;
+  font-size: 0.85rem !important;
+  color: #4b5563 !important; /* slate-600 */
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+
+.responsibility-card li strong {
+  color: #111827 !important; /* dark grey for key terms */
+}
+
+.responsibility-badge {
+  font-family: var(--font-display) !important;
+  font-size: 0.75rem !important;
+  font-weight: 750 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 0.35rem 0.75rem !important;
+  border-radius: 6px !important;
+  width: fit-content !important;
+  color: #ffffff !important;
+  line-height: 1 !important;
+}
+
+.responsibility-badge-goods {
+  background-color: #059669 !important; /* Emerald-600 */
+}
+
+.responsibility-badge-vm {
+  background-color: #4f46e5 !important; /* Indigo-600 */
+}
+
+.responsibility-badge-report {
+  background-color: #e11d48 !important; /* Rose-600 */
+}
+
 
