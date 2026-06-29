@@ -1255,7 +1255,8 @@ ul.space-y-3 li {
 
 /* PDF Title Cover Welcome Section (Slide 1 Theme) */
 .sticky-dates-cover {
-  background: linear-gradient(135deg, #18181b 0%, #000000 100%) !important;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('./assets/store-bg.png') no-repeat center center !important;
+  background-size: cover !important;
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
   position: relative;
@@ -1270,7 +1271,7 @@ ul.space-y-3 li {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+  background-image: radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -1283,7 +1284,7 @@ ul.space-y-3 li {
   font-family: var(--font-display);
   font-weight: 900;
   font-size: 2.25rem;
-  color: var(--color-lush-green) !important; /* Bold Lime Green Title */
+  color: var(--color-white) !important; /* White Title */
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin-top: 1rem;
