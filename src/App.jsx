@@ -260,7 +260,6 @@ export default function App() {
               alt="LUSH Logo" 
               className="lush-logo" 
             />
-            <div className="sidebar-brand-sub">Ops Portal</div>
           </div>
         </div>
 
