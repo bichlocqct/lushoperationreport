@@ -1254,7 +1254,8 @@ ul.space-y-3 li {
 
 /* PDF Title Cover Welcome Section (Slide 1 Theme) */
 .sticky-dates-cover {
-  background: #0a0a0a !important;
+  background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('./assets/store-bg.jpg') no-repeat center center !important;
+  background-size: cover !important;
   border: 1px solid rgba(255, 255, 255, 0.05);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
   position: relative;
