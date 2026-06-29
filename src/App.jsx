@@ -27,21 +27,97 @@ import HistoryTab from './components/HistoryTab';
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedStoreId, setSelectedStoreId] = useState('dong-khoi');
-  const [shiftLeader, setShiftLeader] = useState('');
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
-  
-  // Checklist State
-  const [openingChecks, setOpeningChecks] = useState({});
-  const [openingNotes, setOpeningNotes] = useState({});
-  const [sellingChecks, setSellingChecks] = useState({});
-  const [sellingNotes, setSellingNotes] = useState({});
-  
-  // KPI values: { sales: { target: '', actual: '', actionPlan: '' } }
-  const [kpiValues, setKpiValues] = useState({});
-  
-  // Roster State
-  const [rosterShelf, setRosterShelf] = useState(SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })));
-  const [rosterPos, setRosterPos] = useState(POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })));
+
+  // Master Stores Data State
+  const [storesData, setStoresData] = useState(() => {
+    const saved = localStorage.getItem('lush_stores_data');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    // Try migration from old session
+    const oldSession = localStorage.getItem('lush_active_session');
+    if (oldSession) {
+      try {
+        const session = JSON.parse(oldSession);
+        if (session.storeId) {
+          return {
+            [session.storeId]: {
+              leader: session.leader || '',
+              openingChecks: session.openingChecks || {},
+              openingNotes: session.openingNotes || {},
+              sellingChecks: session.sellingChecks || {},
+              sellingNotes: session.sellingNotes || {},
+              kpiValues: session.kpiValues || {},
+              rosterShelf: session.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
+              rosterPos: session.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+            }
+          };
+        }
+      } catch (e) {}
+    }
+    return {};
+  });
+
+  // Derived state for the active store
+  const activeStoreData = storesData[selectedStoreId] || {
+    leader: '',
+    openingChecks: {},
+    openingNotes: {},
+    sellingChecks: {},
+    sellingNotes: {},
+    kpiValues: {},
+    rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
+    rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+  };
+
+  const shiftLeader = activeStoreData.leader || '';
+  const openingChecks = activeStoreData.openingChecks || {};
+  const openingNotes = activeStoreData.openingNotes || {};
+  const sellingChecks = activeStoreData.sellingChecks || {};
+  const sellingNotes = activeStoreData.sellingNotes || {};
+  const kpiValues = activeStoreData.kpiValues || {};
+  const rosterShelf = activeStoreData.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }));
+  const rosterPos = activeStoreData.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }));
+
+  // Helper setter that updates the state for the active store
+  const updateActiveStoreData = (key, val) => {
+    setStoresData(prev => {
+      const currentStoreData = prev[selectedStoreId] || {
+        leader: '',
+        openingChecks: {},
+        openingNotes: {},
+        sellingChecks: {},
+        sellingNotes: {},
+        kpiValues: {},
+        rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
+        rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+      };
+      
+      const nextVal = typeof val === 'function' ? val(currentStoreData[key]) : val;
+      
+      return {
+        ...prev,
+        [selectedStoreId]: {
+          ...currentStoreData,
+          [key]: nextVal
+        }
+      };
+    });
+  };
+
+  const setShiftLeader = (val) => updateActiveStoreData('leader', val);
+  const setOpeningChecks = (val) => updateActiveStoreData('openingChecks', val);
+  const setOpeningNotes = (val) => updateActiveStoreData('openingNotes', val);
+  const setSellingChecks = (val) => updateActiveStoreData('sellingChecks', val);
+  const setSellingNotes = (val) => updateActiveStoreData('sellingNotes', val);
+  const setKpiValues = (val) => updateActiveStoreData('kpiValues', val);
+  const setRosterShelf = (val) => updateActiveStoreData('rosterShelf', val);
+  const setRosterPos = (val) => updateActiveStoreData('rosterPos', val);
   
   // Weekly Lunch Schedule State: { [storeId]: { [slotKey]: { [day]: '' } } }
   const [lunchStaff, setLunchStaff] = useState({});
@@ -83,55 +159,12 @@ export default function App() {
         console.error('Error parsing weekly shifts from localStorage', e);
       }
     }
-
-    // Load active session if matches today
-    const savedSession = localStorage.getItem('lush_active_session');
-    if (savedSession) {
-      try {
-        const session = JSON.parse(savedSession);
-        if (session.date === new Date().toISOString().split('T')[0]) {
-          if (session.storeId) setSelectedStoreId(session.storeId);
-          if (session.leader) setShiftLeader(session.leader);
-          if (session.openingChecks) setOpeningChecks(session.openingChecks);
-          if (session.openingNotes) setOpeningNotes(session.openingNotes);
-          if (session.sellingChecks) setSellingChecks(session.sellingChecks);
-          if (session.sellingNotes) setSellingNotes(session.sellingNotes);
-          if (session.kpiValues) setKpiValues(session.kpiValues);
-          if (session.rosterShelf) setRosterShelf(session.rosterShelf);
-          if (session.rosterPos) setRosterPos(session.rosterPos);
-        }
-      } catch (e) {
-        console.error('Error parsing session from localStorage', e);
-      }
-    }
   }, []);
 
-  // Save session state to localStorage on modification
+  // Save storesData state to localStorage on modification
   useEffect(() => {
-    const sessionData = {
-      date: new Date().toISOString().split('T')[0],
-      storeId: selectedStoreId,
-      leader: shiftLeader,
-      openingChecks,
-      openingNotes,
-      sellingChecks,
-      sellingNotes,
-      kpiValues,
-      rosterShelf,
-      rosterPos
-    };
-    localStorage.setItem('lush_active_session', JSON.stringify(sessionData));
-  }, [
-    selectedStoreId, 
-    shiftLeader, 
-    openingChecks, 
-    openingNotes, 
-    sellingChecks, 
-    sellingNotes, 
-    kpiValues, 
-    rosterShelf, 
-    rosterPos
-  ]);
+    localStorage.setItem('lush_stores_data', JSON.stringify(storesData));
+  }, [storesData]);
 
   // Save weekly lunch schedule independently
   useEffect(() => {
@@ -157,15 +190,19 @@ export default function App() {
 
   const handleClearForm = () => {
     if (window.confirm('Bạn có muốn xóa toàn bộ biểu mẫu hôm nay? (Lịch sử đã lưu sẽ được giữ lại)')) {
-      setOpeningChecks({});
-      setOpeningNotes({});
-      setSellingChecks({});
-      setSellingNotes({});
-      setKpiValues({});
-      setShiftLeader('');
-      setRosterShelf(SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })));
-      setRosterPos(POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })));
-      localStorage.removeItem('lush_active_session');
+      setStoresData(prev => ({
+        ...prev,
+        [selectedStoreId]: {
+          leader: '',
+          openingChecks: {},
+          openingNotes: {},
+          sellingChecks: {},
+          sellingNotes: {},
+          kpiValues: {},
+          rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
+          rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+        }
+      }));
     }
   };
 
@@ -278,7 +315,7 @@ export default function App() {
           {/* Quick config */}
           <div className="space-y-2">
             <div>
-              <label className="lush-label text-[10px] text-text-muted">Cửa hàng</label>
+              <label className="lush-label text-[10px] text-white">CỬA HÀNG</label>
               <select 
                 value={selectedStoreId} 
                 onChange={(e) => setSelectedStoreId(e.target.value)}
@@ -291,7 +328,7 @@ export default function App() {
             </div>
 
             <div>
-              <label className="lush-label text-[10px] text-text-muted font-display">Trưởng ca (Shift Leader)</label>
+              <label className="lush-label text-[10px] text-white font-display">LEADER</label>
               <input 
                 type="text" 
                 value={shiftLeader}
