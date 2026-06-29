@@ -342,11 +342,10 @@ export default function App() {
                       fill="#ffffff"
                     />
                   </svg>
-                  <div className="text-[10px] font-mono uppercase tracking-[0.2em] font-semibold mt-1" style={{ color: 'rgba(255, 255, 255, 0.75)' }}>Fresh Handmade Cosmetics</div>
                 </div>
                 <div>
-                  <h1 className="sticky-dates-title">Daily Operation Guideline</h1>
-                  <p className="text-xs mt-1 font-semibold" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>Tài liệu hướng dẫn vận hành hàng ngày của trưởng ca & nhân sự LUSH.</p>
+                  <h1 className="sticky-dates-title" style={{ marginTop: '2cm' }}>Daily Operation Report</h1>
+                  <p className="text-xs font-semibold" style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: '2cm' }}>Tài liệu hướng dẫn vận hành hàng ngày của trưởng ca & nhân sự LUSH.</p>
                 </div>
               </div>
 

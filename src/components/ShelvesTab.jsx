@@ -22,7 +22,7 @@ export default function ShelvesTab({ rosterShelf, setRosterShelf }) {
       {/* Black Header Banner resembling PDF Slide Header */}
       <div className="pdf-section-header">
         <span>PHÂN CHIA KỆ</span>
-        <span className="pdf-section-header-sub">Chapter 1 • Daily Operation Guideline</span>
+        <span className="pdf-section-header-sub">Chapter 1 • Daily Operation Report</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

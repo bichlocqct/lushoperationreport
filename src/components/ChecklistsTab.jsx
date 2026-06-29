@@ -131,7 +131,7 @@ export default function ChecklistsTab({
       {/* Black Header Banner resembling PDF Slide Header */}
       <div className="pdf-section-header">
         <span>DAILY OPERATION CHECKLIST</span>
-        <span className="pdf-section-header-sub">Chapter 5 • Daily Operation Guideline</span>
+        <span className="pdf-section-header-sub">Chapter 5 • Daily Operation Report</span>
       </div>
 
       {/* Sub Tabs Selection */}
