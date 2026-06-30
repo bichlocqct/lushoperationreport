@@ -53,8 +53,8 @@ export default function App() {
               sellingChecks: session.sellingChecks || {},
               sellingNotes: session.sellingNotes || {},
               kpiValues: session.kpiValues || {},
-              rosterShelf: session.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
-              rosterPos: session.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+              rosterShelf: session.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
+              rosterPos: session.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
             }
           };
         }
@@ -71,8 +71,8 @@ export default function App() {
     sellingChecks: {},
     sellingNotes: {},
     kpiValues: {},
-    rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
-    rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+    rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
+    rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
   };
 
   const shiftLeader = activeStoreData.leader || '';
@@ -81,8 +81,8 @@ export default function App() {
   const sellingChecks = activeStoreData.sellingChecks || {};
   const sellingNotes = activeStoreData.sellingNotes || {};
   const kpiValues = activeStoreData.kpiValues || {};
-  const rosterShelf = activeStoreData.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }));
-  const rosterPos = activeStoreData.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }));
+  const rosterShelf = activeStoreData.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: '' }));
+  const rosterPos = activeStoreData.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: '' }));
 
   // Helper setter that updates the state for the active store
   const updateActiveStoreData = (key, val) => {
@@ -94,8 +94,8 @@ export default function App() {
         sellingChecks: {},
         sellingNotes: {},
         kpiValues: {},
-        rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
-        rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+        rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
+        rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
       };
       
       const nextVal = typeof val === 'function' ? val(currentStoreData[key]) : val;
@@ -199,8 +199,8 @@ export default function App() {
           sellingChecks: {},
           sellingNotes: {},
           kpiValues: {},
-          rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: item.defaultStaff })),
-          rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: item.defaultStaff }))
+          rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
+          rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
         }
       }));
     }

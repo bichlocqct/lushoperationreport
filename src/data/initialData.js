@@ -98,19 +98,19 @@ export const SHIFT_NOTES = [
 ];
 
 export const SHELF_DIVISION = [
-  { id: 1, area: 'Shower', defaultStaff: 'An' },
-  { id: 2, area: 'Hair', defaultStaff: 'Yến' },
-  { id: 3, area: 'Fragrance + Gift', defaultStaff: 'Bích' },
-  { id: 4, area: 'Face', defaultStaff: 'NV mới' },
-  { id: 5, area: 'Hand/Body', defaultStaff: 'NV mới' },
-  { id: 6, area: 'Last pick up/Cashier', defaultStaff: 'Hân' }
+  { id: 1, area: 'Shower', defaultStaff: '' },
+  { id: 2, area: 'Hair', defaultStaff: '' },
+  { id: 3, area: 'Fragrance + Gift', defaultStaff: '' },
+  { id: 4, area: 'Face', defaultStaff: '' },
+  { id: 5, area: 'Hand/Body', defaultStaff: '' },
+  { id: 6, area: 'Last pick up/Cashier', defaultStaff: '' }
 ];
 
 export const POSITION_DIVISION = [
-  { id: 1, position: 'Tester', defaultStaff: 'Hân' },
-  { id: 2, position: 'Kho', defaultStaff: 'An' },
-  { id: 3, position: 'VMD', defaultStaff: 'Bích' },
-  { id: 4, position: 'Vệ sinh CH', defaultStaff: 'Yến' }
+  { id: 1, position: 'Tester', defaultStaff: '' },
+  { id: 2, position: 'Kho', defaultStaff: '' },
+  { id: 3, position: 'VMD', defaultStaff: '' },
+  { id: 4, position: 'Vệ sinh CH', defaultStaff: '' }
 ];
 
 export const POSITION_SOP = {
