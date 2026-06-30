@@ -109,21 +109,24 @@ export default function ShiftsTab({
             </h4>
           </div>
 
-          {/* Region Tabs (Hồ Chí Minh / Hà Nội) */}
-          <div className="flex gap-1 bg-slate-200 p-0.5 rounded-lg border border-slate-300">
-            {['HCM', 'HN'].map(reg => (
-              <button
-                key={reg}
-                onClick={() => handleRegionChange(reg)}
-                className={`px-4 py-1.5 text-xs font-bold font-display uppercase tracking-wider rounded-md transition-all ${
-                  activeRegion === reg 
-                    ? 'bg-black text-white shadow-sm' 
-                    : 'text-text-muted hover:text-black'
-                }`}
-              >
-                {reg === 'HCM' ? 'Hồ Chí Minh' : 'Hà Nội'}
-              </button>
-            ))}
+          {/* Region Filter Chips */}
+          <div className="flex flex-wrap gap-2">
+            {['HCM', 'HN'].map(reg => {
+              const isActive = activeRegion === reg;
+              return (
+                <button
+                  key={reg}
+                  onClick={() => handleRegionChange(reg)}
+                  className={`px-4 py-2 text-xs font-bold font-display uppercase tracking-wider rounded-xl border transition-all duration-200 ${
+                    isActive
+                      ? 'bg-black text-white border-black shadow-md shadow-black/10 scale-[1.02]'
+                      : 'bg-white text-text-dark border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                  }`}
+                >
+                  {reg === 'HCM' ? 'Hồ Chí Minh' : 'Hà Nội'}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -192,7 +195,7 @@ export default function ShiftsTab({
                 <td className="p-3 border-b border-medium">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-text-dark">Ca sáng</span>
-                    <span className="text-[10px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.morning}</span>
+                    <span className="text-[9px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.morning}</span>
                   </div>
                 </td>
                 {DAYS.map(day => {
@@ -211,7 +214,7 @@ export default function ShiftsTab({
                               value={name}
                               onChange={(e) => handleShiftNameChange('morning', day.key, idx, e.target.value, nameArray)}
                               placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[11px] h-[28px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              className="table-input text-center font-semibold text-[10px] h-[26px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
                             />
                             {nameArray.length > 1 && (
                               <button
@@ -226,11 +229,11 @@ export default function ShiftsTab({
                         ))}
                         <button
                           onClick={() => handleAddNameField('morning', day.key, nameArray)}
-                          className="text-[9px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
+                          className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
                         >
-                          + Thêm ô
+                          +
                         </button>
-                        <span className="text-[9px] text-text-muted mt-0.5 font-mono">{hours}</span>
+                        <span className="text-[8px] text-text-muted mt-0.5 font-mono">{hours}</span>
                       </div>
                     </td>
                   );
@@ -242,7 +245,7 @@ export default function ShiftsTab({
                 <td className="p-3 border-b border-medium">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-text-dark">Ca giữa</span>
-                    <span className="text-[10px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.middle}</span>
+                    <span className="text-[9px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.middle}</span>
                   </div>
                 </td>
                 {DAYS.map(day => {
@@ -261,7 +264,7 @@ export default function ShiftsTab({
                               value={name}
                               onChange={(e) => handleShiftNameChange('middle', day.key, idx, e.target.value, nameArray)}
                               placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[11px] h-[28px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              className="table-input text-center font-semibold text-[10px] h-[26px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
                             />
                             {nameArray.length > 1 && (
                               <button
@@ -276,11 +279,11 @@ export default function ShiftsTab({
                         ))}
                         <button
                           onClick={() => handleAddNameField('middle', day.key, nameArray)}
-                          className="text-[9px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
+                          className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
                         >
-                          + Thêm ô
+                          +
                         </button>
-                        <span className="text-[9px] text-text-muted mt-0.5 font-mono">{hours}</span>
+                        <span className="text-[8px] text-text-muted mt-0.5 font-mono">{hours}</span>
                       </div>
                     </td>
                   );
@@ -292,7 +295,7 @@ export default function ShiftsTab({
                 <td className="p-3 border-b border-medium">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-text-dark">Ca chiều</span>
-                    <span className="text-[10px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.afternoon}</span>
+                    <span className="text-[9px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.afternoon}</span>
                   </div>
                 </td>
                 {DAYS.map(day => {
@@ -311,7 +314,7 @@ export default function ShiftsTab({
                               value={name}
                               onChange={(e) => handleShiftNameChange('afternoon', day.key, idx, e.target.value, nameArray)}
                               placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[11px] h-[28px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              className="table-input text-center font-semibold text-[10px] h-[26px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
                             />
                             {nameArray.length > 1 && (
                               <button
@@ -326,11 +329,11 @@ export default function ShiftsTab({
                         ))}
                         <button
                           onClick={() => handleAddNameField('afternoon', day.key, nameArray)}
-                          className="text-[9px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
+                          className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
                         >
-                          + Thêm ô
+                          +
                         </button>
-                        <span className="text-[9px] text-text-muted mt-0.5 font-mono">{hours}</span>
+                        <span className="text-[8px] text-text-muted mt-0.5 font-mono">{hours}</span>
                       </div>
                     </td>
                   );
@@ -342,7 +345,7 @@ export default function ShiftsTab({
                 <td className="p-3 border-b border-medium">
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-emerald-800">Giờ giao ca</span>
-                    <span className="text-[10px] text-text-muted">Giao ca chuẩn: {selectedStore.shifts.weekday.handover}</span>
+                    <span className="text-[9px] text-text-muted">Giao ca chuẩn: {selectedStore.shifts.weekday.handover}</span>
                   </div>
                 </td>
                 {DAYS.map(day => {
@@ -351,7 +354,7 @@ export default function ShiftsTab({
                     : selectedStore.shifts.weekday.handover;
                   return (
                     <td key={day.key} className="p-2 border-b border-medium text-center">
-                      <span className="text-[11px] text-emerald-800 font-mono font-bold block py-2">{hours}</span>
+                      <span className="text-[9px] text-emerald-800 font-mono font-bold block py-2">{hours}</span>
                     </td>
                   );
                 })}
