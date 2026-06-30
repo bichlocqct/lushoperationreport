@@ -135,35 +135,23 @@ export default function ChecklistsTab({
       </div>
 
       {/* Sub Tabs Selection */}
-      <div className="flex border-b border-medium pb-2 justify-between items-center flex-wrap gap-4">
-        <div className="flex gap-2 flex-wrap">
+      <div className="flex border-b border-medium pb-3 justify-between items-center flex-wrap gap-4">
+        <div className="subtabs-container">
           <button
             onClick={() => setActiveSubTab('opening')}
-            className={`px-4 py-2 font-display text-xs font-bold uppercase tracking-wider transition-all rounded-md ${
-              activeSubTab === 'opening' 
-                ? 'bg-black text-white shadow-sm' 
-                : 'text-text-muted bg-transparent hover:text-black'
-            }`}
+            className={`subtab-btn ${activeSubTab === 'opening' ? 'active' : ''}`}
           >
             Opening Checklist (Trước mở cửa)
           </button>
           <button
             onClick={() => setActiveSubTab('selling')}
-            className={`px-4 py-2 font-display text-xs font-bold uppercase tracking-wider transition-all rounded-md ${
-              activeSubTab === 'selling' 
-                ? 'bg-black text-white shadow-sm' 
-                : 'text-text-muted bg-transparent hover:text-black'
-            }`}
+            className={`subtab-btn ${activeSubTab === 'selling' ? 'active' : ''}`}
           >
             Selling Hour Checklist (Trong ca)
           </button>
           <button
             onClick={() => setActiveSubTab('kpis')}
-            className={`px-4 py-2 font-display text-xs font-bold uppercase tracking-wider transition-all rounded-md ${
-              activeSubTab === 'kpis' 
-                ? 'bg-black text-white shadow-sm' 
-                : 'text-text-muted bg-transparent hover:text-black'
-            }`}
+            className={`subtab-btn ${activeSubTab === 'kpis' ? 'active' : ''}`}
           >
             KPI Tracking (17H00)
           </button>
