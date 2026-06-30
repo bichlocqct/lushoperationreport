@@ -691,100 +691,36 @@ export default function ReportModal({
           </button>
         </div>
 
-        {/* Mode & Preview Selectors */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-bg-inset p-2 border-b border-medium gap-2">
-          <div className="flex gap-2 items-center flex-wrap">
-            <span className="text-[10px] text-text-muted font-bold font-sans px-2 py-1 flex items-center">
-              MẪU BÁO CÁO:
-            </span>
-            <button
-              onClick={() => setReportTemplate('standard')}
-              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
-                reportTemplate === 'standard' 
-                  ? 'bg-black text-white border-black' 
-                  : 'bg-white text-black border-border-medium hover:border-black'
-              }`}
-            >
-              Đầy đủ (Standard)
-            </button>
-            <button
-              onClick={() => setReportTemplate('compact')}
-              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
-                reportTemplate === 'compact' 
-                  ? 'bg-black text-white border-black' 
-                  : 'bg-white text-black border-border-medium hover:border-black'
-              }`}
-            >
-              Rút gọn
-            </button>
-          </div>
-
-          <div className="flex gap-2 items-center flex-wrap border-t sm:border-t-0 pt-2 sm:pt-0 border-medium">
-            <span className="text-[10px] text-text-muted font-bold font-sans px-2 py-1 flex items-center">
-              XEM TRƯỚC:
-            </span>
-            <button
-              onClick={() => setPreviewFormat('text')}
-              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
-                previewFormat === 'text' 
-                  ? 'bg-black text-white border-black' 
-                  : 'bg-white text-black border-border-medium hover:border-black'
-              }`}
-            >
-              Zalo/Telegram (Text)
-            </button>
-            <button
-              onClick={() => setPreviewFormat('web')}
-              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
-                previewFormat === 'web' 
-                  ? 'bg-black text-white border-black' 
-                  : 'bg-white text-black border-border-medium hover:border-black'
-              }`}
-            >
-              Trang Web (Web HTML)
-            </button>
-          </div>
-        </div>
-
         {/* Body Preview */}
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset">
-          {previewFormat === 'text' ? (
-            <div 
-              className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap h-[45vh] overflow-y-auto select-all leading-relaxed"
-              style={{ whiteSpace: 'pre-wrap' }}
-            >
-              {generateReportText()}
-            </div>
-          ) : (
-            <div className="h-[45vh] overflow-y-auto rounded-none">
-              <FormPreview 
-                storeName={storeName}
-                dateStr={todayStr}
-                leader={leader}
-                rosterShelf={rosterShelf}
-                rosterPos={rosterPos}
-                openingChecks={openingChecks}
-                openingNotes={openingNotes}
-                sellingChecks={sellingChecks}
-                sellingNotes={sellingNotes}
-                kpiValues={kpiValues}
-                reportTemplate={reportTemplate}
-                completedOpening={completedOpening}
-                totalOpening={totalOpening}
-                openingProgress={openingProgress}
-                openingIssues={openingIssues}
-                sellingIssues={sellingIssues}
-                todayShifts={todayShifts}
-                weeklyShiftsRoster={weeklyShiftsRoster}
-              />
-            </div>
-          )}
+          <div className="h-[45vh] overflow-y-auto rounded-none">
+            <FormPreview 
+              storeName={storeName}
+              dateStr={todayStr}
+              leader={leader}
+              rosterShelf={rosterShelf}
+              rosterPos={rosterPos}
+              openingChecks={openingChecks}
+              openingNotes={openingNotes}
+              sellingChecks={sellingChecks}
+              sellingNotes={sellingNotes}
+              kpiValues={kpiValues}
+              reportTemplate={reportTemplate}
+              completedOpening={completedOpening}
+              totalOpening={totalOpening}
+              openingProgress={openingProgress}
+              openingIssues={openingIssues}
+              sellingIssues={sellingIssues}
+              todayShifts={todayShifts}
+              weeklyShiftsRoster={weeklyShiftsRoster}
+            />
+          </div>
         </div>
 
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white">
           <span className="text-[10px] text-text-muted font-sans uppercase tracking-wider">
-            {previewFormat === 'text' ? '* Nhấp vào hộp văn bản để bôi đen nhanh' : '* Có thể mở bản HTML đã tải hoặc bản trên Git để In / xuất PDF'}
+            * Có thể mở bản HTML đã tải hoặc bản trên Git để In / xuất PDF
           </span>
           <div className="flex gap-2 w-full sm:w-auto">
             <button
@@ -808,7 +744,7 @@ export default function ReportModal({
               className="btn-black text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
             >
               <Save size={14} />
-              Lưu Vào Lịch Sử
+              Lưu Báo Cáo (Save)
             </button>
           </div>
         </div>
