@@ -151,27 +151,20 @@ export default function ShiftsTab({
       <div className="bento-card bg-slate-50/50 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="space-y-1">
-            <span className="text-[10px] font-bold font-display uppercase tracking-wider text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
-              Bộ lọc vùng miền
-            </span>
             <h4 className="text-xs font-display font-bold uppercase tracking-wider text-black">
               Chọn khu vực & Cửa hàng làm việc
             </h4>
           </div>
 
           {/* Region Filter Chips */}
-          <div className="flex flex-wrap gap-2">
+          <div className="subtabs-container">
             {['HCM', 'HN'].map(reg => {
               const isActive = activeRegion === reg;
               return (
                 <button
                   key={reg}
                   onClick={() => handleRegionChange(reg)}
-                  className={`px-4 py-2 text-xs font-bold font-display uppercase tracking-wider rounded-xl border transition-all duration-200 ${
-                    isActive
-                      ? 'bg-black text-white border-black shadow-md shadow-black/10 scale-[1.02]'
-                      : 'bg-white text-text-dark border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                  }`}
+                  className={`subtab-btn ${isActive ? 'active' : ''}`}
                 >
                   {reg === 'HCM' ? 'Hồ Chí Minh' : 'Hà Nội'}
                 </button>
