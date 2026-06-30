@@ -16,7 +16,6 @@ export default function ChecklistsTab({
   setKpiValues
 }) {
   const [activeSubTab, setActiveSubTab] = useState('opening'); // 'opening' | 'selling' | 'kpis'
-  const [openingFilter, setOpeningFilter] = useState('All');
 
   const getCatBadgeClass = (cat) => {
     const norm = cat.toLowerCase();
@@ -38,13 +37,6 @@ export default function ChecklistsTab({
   const totalOpeningItems = OPENING_CHECKLIST_TEMPLATE.length;
   const completedOpeningItems = OPENING_CHECKLIST_TEMPLATE.filter(item => openingChecks[item.id]).length;
   const openingProgressPercent = Math.round((completedOpeningItems / totalOpeningItems) * 100);
-
-  // Categories in Opening Checklist
-  const openingCategories = ['All', ...new Set(OPENING_CHECKLIST_TEMPLATE.map(item => {
-    if (item.category === 'Store Cleanliness') return 'Cleanliness';
-    if (item.category === 'Team Brief') return 'Brief';
-    return item.category;
-  }))];
 
   const handleOpeningToggle = (id) => {
     setOpeningChecks(prev => ({
@@ -117,21 +109,13 @@ export default function ChecklistsTab({
     }
   };
 
-  const getFilteredOpeningItems = () => {
-    if (openingFilter === 'All') return OPENING_CHECKLIST_TEMPLATE;
-    return OPENING_CHECKLIST_TEMPLATE.filter(item => {
-      const cat = item.category === 'Store Cleanliness' ? 'Cleanliness' : 
-                   item.category === 'Team Brief' ? 'Brief' : item.category;
-      return cat === openingFilter;
-    });
-  };
+
 
   return (
     <div className="space-y-6">
       {/* Black Header Banner resembling PDF Slide Header */}
       <div className="pdf-section-header">
         <span>DAILY OPERATION CHECKLIST</span>
-        <span className="pdf-section-header-sub">Chapter 5 • Daily Operation Report</span>
       </div>
 
       {/* Sub Tabs Selection */}
@@ -194,22 +178,7 @@ export default function ChecklistsTab({
             </div>
           </div>
 
-          {/* Filter Categories */}
-          <div className="flex flex-wrap gap-1.5">
-            {openingCategories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setOpeningFilter(cat)}
-                className={`px-3 py-1.5 text-[10px] font-bold font-display uppercase tracking-wider border rounded-md transition-all ${
-                  openingFilter === cat 
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' 
-                    : 'bg-white text-text-dark border-border-medium hover:border-emerald-600 hover:text-emerald-600'
-                }`}
-              >
-                {cat === 'All' ? 'Tất cả' : cat}
-              </button>
-            ))}
-          </div>
+
 
           {/* Checklist Table */}
           <div className="table-container overflow-x-auto">
@@ -224,7 +193,7 @@ export default function ChecklistsTab({
                 </tr>
               </thead>
               <tbody>
-                {getFilteredOpeningItems().map((item, idx) => (
+                {OPENING_CHECKLIST_TEMPLATE.map((item, idx) => (
                   <tr 
                     key={item.id} 
                     className={openingChecks[item.id] ? 'row-checked' : ''}

@@ -7,7 +7,6 @@ export default function BreaksTab() {
       {/* PDF Styled Section Header Bar */}
       <div className="pdf-section-header">
         <span>LỊCH NGHỈ TRƯA</span>
-        <span className="pdf-section-header-sub">Chapter 4 • Daily Operation Report</span>
       </div>
 
       <div className="max-w-2xl mx-auto">

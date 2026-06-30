@@ -58,7 +58,6 @@ export default function PositionsTab({ rosterPos, setRosterPos }) {
       {/* PDF Styled Section Header Bar */}
       <div className="pdf-section-header">
         <span>PHÂN CHIA VỊ TRÍ TẠI CỬA HÀNG</span>
-        <span className="pdf-section-header-sub">Chapter 2 • Daily Operation Report</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

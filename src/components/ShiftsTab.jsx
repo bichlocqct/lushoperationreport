@@ -144,7 +144,6 @@ export default function ShiftsTab({
       {/* PDF Styled Section Header Bar */}
       <div className="pdf-section-header">
         <span>CA LÀM VIỆC TẠI CỬA HÀNG</span>
-        <span className="pdf-section-header-sub">Chapter 3 • Daily Operation Report</span>
       </div>
 
       {/* Region Selector (Placed prominently ABOVE the Store Selector) */}
