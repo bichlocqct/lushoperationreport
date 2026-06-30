@@ -387,9 +387,10 @@ body {
 }
 
 .input-text:focus, .select-box:focus {
-  background-color: var(--color-white);
-  border-color: var(--color-lush-green);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+  background-color: var(--color-white) !important;
+  border-color: #000000 !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12) !important;
+  outline: none !important;
 }
 
 /* Responsive Grid splits */
@@ -678,9 +679,10 @@ body {
 }
 
 .table-input:focus {
-  background-color: var(--color-white);
-  border-color: var(--color-lush-green);
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+  background-color: var(--color-white) !important;
+  border-color: #000000 !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12) !important;
+  outline: none !important;
 }
 
 /* Active checked checklist rows (left black line indicators) */
@@ -862,6 +864,7 @@ body {
 /* Interactive cell highlight for tables */
 .lush-table tr td.cell-highlight {
   position: relative;
+  transition: background-color 0.2s ease;
 }
 
 .lush-table tr td.cell-highlight:hover::after {
@@ -871,6 +874,21 @@ body {
   border: 1.5px solid var(--color-lush-green);
   border-radius: var(--radius-sm);
   pointer-events: none;
+}
+
+.lush-table tr td.cell-highlight:focus-within {
+  background-color: #f8fafc !important;
+}
+
+.lush-table tr td.cell-highlight:focus-within::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border: 2px solid #000000 !important;
+  border-radius: var(--radius-sm);
+  pointer-events: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12) !important;
+  z-index: 10;
 }
 
 /* --- ADDED PREMIUM UI/UX UTILITIES --- */
