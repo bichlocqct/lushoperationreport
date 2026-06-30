@@ -750,6 +750,8 @@ export default function ReportModal({
                 openingProgress={openingProgress}
                 openingIssues={openingIssues}
                 sellingIssues={sellingIssues}
+                todayShifts={todayShifts}
+                weeklyShiftsRoster={weeklyShiftsRoster}
               />
             </div>
           )}
