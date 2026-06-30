@@ -454,6 +454,7 @@ export default function App() {
         sellingChecks={sellingChecks}
         sellingNotes={sellingNotes}
         kpiValues={kpiValues}
+        weeklyShifts={weeklyShifts}
         onSaveReport={handleSaveReport}
       />
     </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Save, FileText, Globe } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
+import { STORES, KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 import { generateReportHTML } from '../utils/reportGenerator';
 
 // Native React Form Preview Component for visual presentation inside the app
@@ -21,9 +21,19 @@ const FormPreview = ({
   totalOpening,
   openingProgress,
   openingIssues,
-  sellingIssues
+  sellingIssues,
+  todayShifts
 }) => {
   const kpiCount = reportTemplate === 'standard' ? 'IV' : 'III';
+  const shifts = todayShifts || {
+    morning: '',
+    middle: '',
+    afternoon: '',
+    morningHours: '',
+    middleHours: '',
+    afternoonHours: '',
+    handoverHours: ''
+  };
   
   return (
     <div style={{
@@ -85,8 +95,32 @@ const FormPreview = ({
         <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
           I. Phân Bổ Nhân Sự Ca Làm Việc / Shift Assignment
         </div>
+
+        {/* 1. Today's Shifts list */}
+        {shifts.morningHours && (
+          <>
+            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
+              1. Lịch Trực Ca Hôm Nay (Today's Shifts)
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '12px' }}>
+              <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Sáng (${shifts.morningHours})</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.morning || '--'}</span>
+              </div>
+              <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Giữa (${shifts.middleHours})</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.middle || '--'}</span>
+              </div>
+              <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Chiều (${shifts.afternoonHours})</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.afternoon || '--'}</span>
+              </div>
+            </div>
+          </>
+        )}
+
         <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
-          1. Vị Trí Vận Hành Cửa Hàng (Positions)
+          {shifts.morningHours ? '2. Vị Trí Vận Hành Cửa Hàng (Positions)' : '1. Vị Trí Vận Hành Cửa Hàng (Positions)'}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px', marginBottom: '12px' }}>
           {rosterPos.map(p => (
@@ -98,7 +132,7 @@ const FormPreview = ({
         </div>
         
         <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
-          2. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)
+          {shifts.morningHours ? '3. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)' : '2. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)'}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px' }}>
           {rosterShelf.map(s => (
@@ -243,6 +277,7 @@ export default function ReportModal({
   sellingChecks,
   sellingNotes,
   kpiValues,
+  weeklyShifts = {},
   onSaveReport
 }) {
   const [reportTemplate, setReportTemplate] = useState('standard'); // 'standard' | 'compact'
@@ -257,6 +292,48 @@ export default function ReportModal({
     month: 'long',
     day: 'numeric'
   });
+
+  // Lookup today's shift allocation from shifts roster tab
+  const activeStore = STORES.find(s => s.name === storeName) || STORES[0];
+  const dayOfWeek = new Date().getDay(); // 0 is Sunday, 6 is Saturday
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const shiftTimes = isWeekend ? activeStore.shifts.weekend : activeStore.shifts.weekday;
+
+  const getDayKey = () => {
+    const mapping = {
+      0: 'sunday',
+      1: 'monday',
+      2: 'tuesday',
+      3: 'wednesday',
+      4: 'thursday',
+      5: 'friday',
+      6: 'saturday'
+    };
+    return mapping[dayOfWeek];
+  };
+
+  const todayDayKey = getDayKey();
+
+  const getShiftStaff = (shiftKey) => {
+    const storeShifts = weeklyShifts[activeStore.id] || {};
+    const val = storeShifts[shiftKey]?.[todayDayKey] || '';
+    if (!val) return '';
+    return val.split(';;').filter(name => name.trim() !== '').join(', ');
+  };
+
+  const morningStaff = getShiftStaff('morning');
+  const middleStaff = getShiftStaff('middle');
+  const afternoonStaff = getShiftStaff('afternoon');
+
+  const todayShifts = {
+    morning: morningStaff,
+    middle: middleStaff,
+    afternoon: afternoonStaff,
+    morningHours: shiftTimes.morning,
+    middleHours: shiftTimes.middle,
+    afternoonHours: shiftTimes.afternoon,
+    handoverHours: shiftTimes.handover
+  };
 
   // Calculate opening items counts
   const totalOpening = OPENING_CHECKLIST_TEMPLATE.length;
@@ -292,7 +369,8 @@ export default function ReportModal({
     openingNotes,
     sellingChecks,
     sellingNotes,
-    kpiValues
+    kpiValues,
+    todayShifts
   };
 
   // Generate Report Text
@@ -305,6 +383,14 @@ export default function ReportModal({
       text += `👤 *Leader ca:* ${leader}\n`;
     }
     text += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+    // Today's Shift Roster Info
+    text += `👥 *LỊCH TRỰC HÔM NAY:*\n`;
+    if (morningStaff) text += `• Ca Sáng (${shiftTimes.morning}): ${morningStaff}\n`;
+    if (middleStaff) text += `• Ca Giữa (${shiftTimes.middle}): ${middleStaff}\n`;
+    if (afternoonStaff) text += `• Ca Chiều (${shiftTimes.afternoon}): ${afternoonStaff}\n`;
+    if (shiftTimes.handover) text += `• Giờ giao ca: ${shiftTimes.handover}\n`;
+    text += `\n`;
 
     // Duty Roster
     text += `👥 *PHÂN BỔ NHÂN SỰ TRONG CA:*\n`;
@@ -404,7 +490,8 @@ export default function ReportModal({
       sellingNotes,
       kpiValues,
       rawText: generateReportText(),
-      fileName
+      fileName,
+      todayShifts
     };
 
     const htmlContent = generateReportHTML(reportData, reportTemplate);

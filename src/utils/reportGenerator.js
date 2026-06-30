@@ -19,7 +19,8 @@ export function generateReportHTML(reportData, template = 'standard') {
     openingNotes = {},
     sellingChecks = {},
     sellingNotes = {},
-    kpiValues = {}
+    kpiValues = {},
+    todayShifts
   } = reportData;
 
   // Process opening checklists issues
@@ -35,7 +36,31 @@ export function generateReportHTML(reportData, template = 'standard') {
     note: sellingNotes[item.id]
   }));
 
-  // 1. Roster and Shift Allocation Grid
+  // 1. Shift Schedule HTML (Today's Shifts)
+  let todayShiftsHTML = '';
+  if (todayShifts) {
+    todayShiftsHTML = `
+      <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; color: #52525b; letter-spacing: 0.05em;">
+        1. Lịch Trực Ca Hôm Nay (Today's Shifts)
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 15px;">
+        <div style="border: 1px solid #000000; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between;">
+          <span style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: #52525b; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Ca Sáng (${todayShifts.morningHours || ''})</span>
+          <span style="font-size: 11px; font-weight: bold; color: #000000;">${todayShifts.morning || '--'}</span>
+        </div>
+        <div style="border: 1px solid #000000; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between;">
+          <span style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: #52525b; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Ca Giữa (${todayShifts.middleHours || ''})</span>
+          <span style="font-size: 11px; font-weight: bold; color: #000000;">${todayShifts.middle || '--'}</span>
+        </div>
+        <div style="border: 1px solid #000000; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between;">
+          <span style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: #52525b; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Ca Chiều (${todayShifts.afternoonHours || ''})</span>
+          <span style="font-size: 11px; font-weight: bold; color: #000000;">${todayShifts.afternoon || '--'}</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // 2. Roster and Shift Allocation Grid
   const rosterItems = [
     { label: 'Leader Ca', value: leader },
     ...rosterPos.map(p => ({ label: p.position, value: p.staff }))
@@ -48,7 +73,7 @@ export function generateReportHTML(reportData, template = 'standard') {
     </div>
   `).join('');
 
-  // 2. Shelf Assignments Grid
+  // 3. Shelf Assignments Grid
   const shelfHTML = rosterShelf.map(s => `
     <div style="border: 1px solid #000000; padding: 6px 10px; display: flex; flex-direction: column; justify-content: space-between;">
       <span style="font-size: 8px; font-weight: bold; text-transform: uppercase; color: #52525b; letter-spacing: 0.05em; display: block; margin-bottom: 2px;">Kệ: ${s.area}</span>
@@ -56,7 +81,7 @@ export function generateReportHTML(reportData, template = 'standard') {
     </div>
   `).join('');
 
-  // 3. Complete Opening Checklist Items with Checkbox styling
+  // 4. Complete Opening Checklist Items with Checkbox styling
   const openingItemsHTML = OPENING_CHECKLIST_TEMPLATE.map(item => {
     const isChecked = openingChecks[item.id];
     const note = openingNotes[item.id];
@@ -74,7 +99,7 @@ export function generateReportHTML(reportData, template = 'standard') {
     `;
   }).join('');
 
-  // 4. Selling checklists table (Only if template is standard)
+  // 5. Selling checklists table (Only if template is standard)
   let sellingHoursSectionHTML = '';
   if (template === 'standard') {
     const sellingRows = SELLING_HOUR_TEMPLATE.map(item => {
@@ -127,7 +152,7 @@ export function generateReportHTML(reportData, template = 'standard') {
     `;
   }
 
-  // 5. KPI Summary Table
+  // 6. KPI Summary Table
   const kpiRowsHTML = KPI_TEMPLATES.map(kpi => {
     const vals = kpiValues[kpi.key] || { target: '', actual: '', actionPlan: '' };
     const targetVal = parseFloat(vals.target);
@@ -159,6 +184,8 @@ export function generateReportHTML(reportData, template = 'standard') {
   const openingProgress = Math.round((completedOpening / totalOpening) * 100);
 
   const kpiCount = template === 'standard' ? 'IV' : 'III';
+  const posCount = todayShifts ? '2' : '1';
+  const shelfCount = todayShifts ? '3' : '2';
 
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -394,18 +421,22 @@ export function generateReportHTML(reportData, template = 'standard') {
       </div>
     </div>
 
-    <!-- I. Duty Roster & Shelves -->
+    <!-- I. Duty Roster & Shifts -->
     <div class="section-block">
       <div class="form-section-header">I. Phân Bổ Nhân Sự Ca Làm Việc / Shift Assignment</div>
+      
+      <!-- 1. Today's shifts schedule -->
+      ${todayShiftsHTML}
+
       <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; color: #52525b; letter-spacing: 0.05em;">
-        1. Vị Trí Vận Hành Cửa Hàng (Positions)
+        ${posCount}. Vị Trí Vận Hành Cửa Hàng (Positions)
       </div>
       <div class="grid-roster">
         ${rosterHTML}
       </div>
       
       <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; margin-top: 15px; margin-bottom: 6px; color: #52525b; letter-spacing: 0.05em;">
-        2. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)
+        ${shelfCount}. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)
       </div>
       <div class="grid-shelves">
         ${shelfHTML}
@@ -426,7 +457,7 @@ export function generateReportHTML(reportData, template = 'standard') {
       </div>
     </div>
 
-    <!-- III. Selling Hours Checklists -->
+    <!-- III. Checklist Trong Ca -->
     ${sellingHoursSectionHTML}
 
     <!-- IV. KPIs & Sales Tracking Table -->

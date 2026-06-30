@@ -15,7 +15,8 @@ const FormPreview = ({
   sellingChecks,
   sellingNotes,
   kpiValues,
-  reportTemplate
+  reportTemplate,
+  todayShifts
 }) => {
   // Calculate counts for history item
   const totalOpening = OPENING_CHECKLIST_TEMPLATE.length;
@@ -34,6 +35,15 @@ const FormPreview = ({
   }));
 
   const kpiCount = reportTemplate === 'standard' ? 'IV' : 'III';
+  const shifts = todayShifts || {
+    morning: '',
+    middle: '',
+    afternoon: '',
+    morningHours: '',
+    middleHours: '',
+    afternoonHours: '',
+    handoverHours: ''
+  };
   
   return (
     <div style={{
@@ -95,8 +105,32 @@ const FormPreview = ({
         <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
           I. Phân Bổ Nhân Sự Ca Làm Việc / Shift Assignment
         </div>
+
+        {/* 1. Today's Shifts list */}
+        {shifts.morningHours && (
+          <>
+            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
+              1. Lịch Trực Ca Hôm Nay (Today's Shifts)
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '12px' }}>
+              <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Sáng (${shifts.morningHours})</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.morning || '--'}</span>
+              </div>
+              <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Giữa (${shifts.middleHours})</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.middle || '--'}</span>
+              </div>
+              <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Chiều (${shifts.afternoonHours})</span>
+                <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.afternoon || '--'}</span>
+              </div>
+            </div>
+          </>
+        )}
+
         <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
-          1. Vị Trí Vận Hành Cửa Hàng (Positions)
+          {shifts.morningHours ? '2. Vị Trí Vận Hành Cửa Hàng (Positions)' : '1. Vị Trí Vận Hành Cửa Hàng (Positions)'}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px', marginBottom: '12px' }}>
           {rosterPos.map(p => (
@@ -108,7 +142,7 @@ const FormPreview = ({
         </div>
         
         <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
-          2. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)
+          {shifts.morningHours ? '3. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)' : '2. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)'}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px' }}>
           {rosterShelf.map(s => (
@@ -428,6 +462,7 @@ export default function HistoryTab({ reports, onDeleteReport }) {
                           sellingNotes={report.sellingNotes}
                           kpiValues={report.kpiValues}
                           reportTemplate={report.template || 'standard'}
+                          todayShifts={report.todayShifts}
                         />
                       </div>
                     )}
