@@ -28,6 +28,54 @@ export default function ShiftsTab({
     }
   }, [selectedStoreId]);
 
+  const formatHandoverTime = (timeStr) => {
+    if (!timeStr) return null;
+    if (timeStr.includes('(')) {
+      const parts = timeStr.split('(');
+      const timeRange = parts[0].trim();
+      const duration = parts[1].replace(')', '').trim();
+      return (
+        <div className="flex flex-col items-center justify-center leading-normal">
+          <span className="font-mono font-bold text-[9px] text-slate-800 block whitespace-nowrap">{timeRange}</span>
+          <span className="text-[8px] text-text-muted font-bold block mt-0.5 whitespace-nowrap bg-slate-100 border border-slate-200/60 px-1.5 py-0.5 rounded-full">
+            {duration}
+          </span>
+        </div>
+      );
+    }
+    return <span className="font-mono font-bold text-[9px] text-slate-800 block whitespace-nowrap">{timeStr}</span>;
+  };
+
+  const formatLeftHandover = (timeStr) => {
+    if (!timeStr) return null;
+    if (timeStr.includes('(')) {
+      const parts = timeStr.split('(');
+      const timeRange = parts[0].trim();
+      const duration = parts[1].replace(')', '').trim();
+      return (
+        <span className="text-[9px] text-text-muted mt-0.5 block whitespace-nowrap">
+          Giao ca chuẩn: <strong className="text-text-dark font-mono">{timeRange}</strong> ({duration})
+        </span>
+      );
+    }
+    return <span className="text-[9px] text-text-dark font-semibold mt-0.5 block">{timeStr}</span>;
+  };
+
+  const formatDirectoryHandover = (timeStr) => {
+    if (!timeStr) return null;
+    if (timeStr.includes('(')) {
+      const parts = timeStr.split('(');
+      const timeRange = parts[0].trim();
+      const duration = parts[1].replace(')', '').trim();
+      return (
+        <span className="text-xs whitespace-nowrap">
+          <strong className="font-mono text-slate-800">{timeRange}</strong> <span className="text-[10px] text-text-muted">({duration})</span>
+        </span>
+      );
+    }
+    return <span className="text-xs font-mono font-bold text-slate-800">{timeStr}</span>;
+  };
+
   const handleRegionChange = (region) => {
     setActiveRegion(region);
     const regionalStores = STORES.filter(store => store.region === region);
@@ -147,8 +195,9 @@ export default function ShiftsTab({
               </option>
             ))}
           </select>
-          <span className="text-[10px] font-semibold text-text-muted">
-            (Thời gian mở cửa: {selectedStore.hours.weekday})
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200/60 text-text-muted text-[10px] font-bold tracking-wide uppercase whitespace-nowrap mt-1 sm:mt-0">
+            <Clock size={11} className="text-slate-500" />
+            Thời gian mở cửa: {selectedStore.hours.weekday}
           </span>
         </div>
       </div>
@@ -344,8 +393,8 @@ export default function ShiftsTab({
               <tr className="hover:bg-slate-50/50">
                 <td className="p-3 border-b border-medium">
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-emerald-800">Giờ giao ca</span>
-                    <span className="text-[9px] text-text-muted">Giao ca chuẩn: {selectedStore.shifts.weekday.handover}</span>
+                    <span className="text-xs font-bold text-slate-800">Giờ giao ca</span>
+                    {formatLeftHandover(selectedStore.shifts.weekday.handover)}
                   </div>
                 </td>
                 {DAYS.map(day => {
@@ -354,7 +403,7 @@ export default function ShiftsTab({
                     : selectedStore.shifts.weekday.handover;
                   return (
                     <td key={day.key} className="p-2 border-b border-medium text-center">
-                      <span className="text-[9px] text-emerald-800 font-mono font-bold block py-2">{hours}</span>
+                      {formatHandoverTime(hours)}
                     </td>
                   );
                 })}
@@ -462,7 +511,7 @@ export default function ShiftsTab({
                       <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekday.morning}</td>
                       <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekday.middle}</td>
                       <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekday.afternoon}</td>
-                      <td className="p-3 border-b border-medium text-xs font-bold text-emerald-800">{store.shifts.weekday.handover}</td>
+                      <td className="p-3 border-b border-medium">{formatDirectoryHandover(store.shifts.weekday.handover)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -495,7 +544,7 @@ export default function ShiftsTab({
                       <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekend.morning}</td>
                       <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekend.middle}</td>
                       <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekend.afternoon}</td>
-                      <td className="p-3 border-b border-medium text-xs font-bold text-indigo-800">{store.shifts.weekend.handover}</td>
+                      <td className="p-3 border-b border-medium">{formatDirectoryHandover(store.shifts.weekend.handover)}</td>
                     </tr>
                   ))}
                 </tbody>
