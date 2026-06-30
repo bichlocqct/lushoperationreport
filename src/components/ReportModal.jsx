@@ -204,7 +204,10 @@ export default function ReportModal({
 
         {/* Body Preview */}
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset">
-          <div className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap max-h-[45vh] overflow-y-auto select-all leading-relaxed">
+          <div 
+            className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap max-h-[45vh] overflow-y-auto select-all leading-relaxed"
+            style={{ whiteSpace: 'pre-wrap' }}
+          >
             {generateReportText()}
           </div>
         </div>
