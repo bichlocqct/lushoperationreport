@@ -750,13 +750,13 @@ export default function ReportModal({
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset">
           {previewFormat === 'text' ? (
             <div 
-              className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap h-[55vh] overflow-y-auto select-all leading-relaxed"
+              className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap h-[45vh] overflow-y-auto select-all leading-relaxed"
               style={{ whiteSpace: 'pre-wrap' }}
             >
               {generateReportText()}
             </div>
           ) : (
-            <div className="h-[55vh] overflow-y-auto rounded-none">
+            <div className="h-[45vh] overflow-y-auto rounded-none">
               <FormPreview 
                 storeName={storeName}
                 dateStr={todayStr}
