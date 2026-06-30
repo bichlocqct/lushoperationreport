@@ -1,12 +1,241 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, Save, FileText } from 'lucide-react';
+import { X, Copy, Check, Save, FileText, Globe } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
+import { generateReportHTML } from '../utils/reportGenerator';
+
+// Native React Form Preview Component for visual presentation inside the app
+const FormPreview = ({
+  storeName,
+  dateStr,
+  leader,
+  rosterShelf,
+  rosterPos,
+  openingChecks,
+  openingNotes,
+  sellingChecks,
+  sellingNotes,
+  kpiValues,
+  reportTemplate,
+  completedOpening,
+  totalOpening,
+  openingProgress,
+  openingIssues,
+  sellingIssues
+}) => {
+  const kpiCount = reportTemplate === 'standard' ? 'IV' : 'III';
+  
+  return (
+    <div style={{
+      fontFamily: "'Roboto', -apple-system, sans-serif",
+      color: "#000000",
+      backgroundColor: "#ffffff",
+      padding: "24px",
+      border: "2px solid #000000",
+      lineHeight: "1.4",
+      width: "100%",
+      margin: "0 auto",
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+    }}>
+      {/* Header Block */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
+        <tbody>
+          <tr>
+            <td style={{
+              border: '1.5px solid #000000',
+              padding: '10px 15px',
+              textAlign: 'center',
+              fontWeight: 900,
+              fontSize: '22px',
+              letterSpacing: '0.15em',
+              backgroundColor: '#000000',
+              color: '#ffffff',
+              width: '100px'
+            }}>LUSH</td>
+            <td style={{
+              border: '1.5px solid #000000',
+              padding: '10px 15px',
+              textAlign: 'center'
+            }}>
+              <h1 style={{ fontSize: '15px', fontWeight: 900, textTransform: 'uppercase', margin: '0 0 2px 0', letterSpacing: '0.05em' }}>Bản Ghi Vận Hành Hàng Ngày</h1>
+              <span style={{ fontSize: '9px', fontWeight: 500, textTransform: 'uppercase', color: '#52525b', letterSpacing: '0.05em' }}>Daily Operation & Shift Log Form</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Basic Form Fields */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', border: '1.5px solid #000000', marginBottom: '20px' }}>
+        <div style={{ padding: '6px 10px', borderRight: '1.5px solid #000000' }}>
+          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Cửa hàng / Store Location</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{storeName}</span>
+        </div>
+        <div style={{ padding: '6px 10px', borderRight: '1.5px solid #000000' }}>
+          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Ngày thực hiện / Date Record</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{dateStr}</span>
+        </div>
+        <div style={{ padding: '6px 10px' }}>
+          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Leader Ca / Shift Leader</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{leader || '--'}</span>
+        </div>
+      </div>
+
+      {/* I. Duty Roster */}
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+          I. Phân Bổ Nhân Sự Ca Làm Việc / Shift Assignment
+        </div>
+        <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
+          1. Vị Trí Vận Hành Cửa Hàng (Positions)
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px', marginBottom: '12px' }}>
+          {rosterPos.map(p => (
+            <div key={p.id} style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+              <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>{p.position}</span>
+              <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{p.staff || '--'}</span>
+            </div>
+          ))}
+        </div>
+        
+        <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '5px', color: '#52525b', letterSpacing: '0.05em' }}>
+          2. Phụ Trách Khu Vực Kệ Sản Phẩm (Shelves Allocation)
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '6px' }}>
+          {rosterShelf.map(s => (
+            <div key={s.id} style={{ border: '1px solid #000000', padding: '5px 8px' }}>
+              <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Kệ: {s.area}</span>
+              <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{s.staff || '--'}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* II. Checklist Mở Cửa */}
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+          II. Checklist Mở Cửa Cửa Hàng / Opening Operations Checklist
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 15px', border: '1px solid #000000', padding: '10px', marginBottom: '8px' }}>
+          {OPENING_CHECKLIST_TEMPLATE.map(item => {
+            const isChecked = openingChecks[item.id];
+            const note = openingNotes[item.id];
+            return (
+              <div key={item.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '4px', padding: '3px 0', borderBottom: '1px dashed #cccccc' }}>
+                <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 'bold', lineHeight: 1, color: '#000' }}>
+                  {isChecked ? '☑' : '☐'}
+                </span>
+                <span style={{ fontSize: '9px', color: isChecked ? '#000000' : '#52525b' }}>
+                  <span style={{ fontWeight: '800', fontSize: '7px', textTransform: 'uppercase', color: '#71717a', marginRight: '3px' }}>[{item.category}]</span> 
+                  {item.task}
+                  {note && <span style={{ color: '#c2410c', fontWeight: 'bold' }}> (⚠️: {note})</span>}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        
+        <div style={{ border: '1px solid #000000', padding: '6px 12px', display: 'flex', justifyContent: 'space-between', fontSize: '9px', fontWeight: 'bold', backgroundColor: '#fafafa' }}>
+          <span>Tổng kết tiến độ hoàn thành Opening:</span>
+          <span>{completedOpening}/{totalOpening} ({openingProgress}%) - {openingProgress === 100 ? 'ĐẠT CHUẨN (PASSED)' : 'CÓ LƯU Ý (ATTENTION)'}</span>
+        </div>
+      </div>
+
+      {/* III. Checklist Trong Ca */}
+      {reportTemplate === 'standard' && (
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+            III. Checklist Hoạt Động Trong Ca / Selling Hours Checklists
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '8px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f4f4f5' }}>
+                <th style={{ border: '1px solid #000000', textAlign: 'left', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold' }}>Hạng Mục Công Việc / Task Description</th>
+                <th style={{ border: '1px solid #000000', textAlign: 'center', padding: '6px 4px', fontSize: '8.5px', width: '10%', fontWeight: 'bold' }}>11:00</th>
+                <th style={{ border: '1px solid #000000', textAlign: 'center', padding: '6px 4px', fontSize: '8.5px', width: '10%', fontWeight: 'bold' }}>14:00</th>
+                <th style={{ border: '1px solid #000000', textAlign: 'center', padding: '6px 4px', fontSize: '8.5px', width: '10%', fontWeight: 'bold' }}>17:00</th>
+                <th style={{ border: '1px solid #000000', textAlign: 'center', padding: '6px 4px', fontSize: '8.5px', width: '10%', fontWeight: 'bold' }}>19:00</th>
+              </tr>
+            </thead>
+            <tbody>
+              {SELLING_HOUR_TEMPLATE.map(item => {
+                const checks = sellingChecks[item.id] || {};
+                return (
+                  <tr key={item.id} style={{ borderBottom: '1px solid #000000' }}>
+                    <td style={{ border: '1px solid #000000', padding: '5px 8px', fontSize: '9px' }}>{item.task}</td>
+                    {['11AM', '2PM', '5PM', '7PM'].map(t => (
+                      <td key={t} style={{ textAlign: 'center', border: '1px solid #000000', padding: '5px', fontFamily: 'monospace', fontSize: '11px', fontWeight: 'bold' }}>
+                        {checks[t] ? '☑' : '☐'}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {sellingIssues.length > 0 && (
+            <div style={{ border: '1px solid #000000', borderTop: 'none', padding: '8px 10px', backgroundColor: '#fafafa', fontSize: '9px' }}>
+              <div style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '3px', color: '#52525b' }}>
+                ⚠️ Sự Cố & Ghi Chú Phát Sinh Trong Ca:
+              </div>
+              <ul style={{ margin: 0, paddingLeft: '12px' }}>
+                {sellingIssues.map((iss, index) => (
+                  <li key={index}><strong>{iss.task}:</strong> <em>{iss.note}</em></li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* IV. KPIs & Sales */}
+      <div style={{ marginBottom: '15px' }}>
+        <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+          {kpiCount}. Chỉ Số KPI & Doanh Số / Performance KPI Tracking
+        </div>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ backgroundColor: '#f4f4f5' }}>
+              <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', textAlign: 'left' }}>Chỉ Số KPI / Metric</th>
+              <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', width: '18%', textAlign: 'right' }}>Chỉ Tiêu / Target</th>
+              <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', width: '18%', textAlign: 'right' }}>Đạt Được / Actual</th>
+              <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', width: '12%', textAlign: 'center' }}>Tỷ Lệ / %</th>
+              <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', width: '22%', textAlign: 'left' }}>Kế Hoạch / Ghi Chú</th>
+            </tr>
+          </thead>
+          <tbody>
+            {KPI_TEMPLATES.map(kpi => {
+              const vals = kpiValues[kpi.key] || { target: '', actual: '', actionPlan: '' };
+              const targetVal = parseFloat(vals.target);
+              const actualVal = parseFloat(vals.actual);
+              let pctStr = '--';
+              if (!isNaN(targetVal) && !isNaN(actualVal) && targetVal > 0) {
+                pctStr = `${Math.round((actualVal / targetVal) * 100)}%`;
+              }
+              const targetFmt = kpi.format === 'number' && vals.target ? Number(vals.target).toLocaleString('vi-VN') : vals.target || '--';
+              const actualFmt = kpi.format === 'number' && vals.actual ? Number(vals.actual).toLocaleString('vi-VN') : vals.actual || '--';
+              return (
+                <tr key={kpi.key} style={{ borderBottom: '1px solid #000000' }}>
+                  <td style={{ border: '1px solid #000000', padding: '5px 8px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase' }}>{kpi.label}</td>
+                  <td style={{ border: '1px solid #000000', padding: '5px 8px', fontFamily: 'monospace', fontSize: '10px', textAlign: 'right' }}>{targetFmt} <span style={{ fontSize: '7px', color: '#52525b' }}>{kpi.unit}</span></td>
+                  <td style={{ border: '1px solid #000000', padding: '5px 8px', fontFamily: 'monospace', fontSize: '10px', fontWeight: 'bold', textAlign: 'right' }}>{actualFmt} <span style={{ fontSize: '7px', color: '#52525b' }}>{kpi.unit}</span></td>
+                  <td style={{ border: '1px solid #000000', padding: '5px 8px', fontFamily: 'monospace', fontSize: '10px', fontWeight: 'bold', textAlign: 'center' }}>{pctStr}</td>
+                  <td style={{ border: '1px solid #000000', padding: '5px 8px', fontSize: '9px', fontStyle: 'italic', color: '#3f3f46' }}>{vals.actionPlan || '--'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 export default function ReportModal({
   isOpen,
   onClose,
   storeName,
+  leader,
   rosterShelf,
   rosterPos,
   openingChecks,
@@ -17,6 +246,7 @@ export default function ReportModal({
   onSaveReport
 }) {
   const [reportTemplate, setReportTemplate] = useState('standard'); // 'standard' | 'compact'
+  const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -35,6 +265,7 @@ export default function ReportModal({
 
   // Check for issues/notes in opening checklist
   const openingIssues = OPENING_CHECKLIST_TEMPLATE.filter(item => openingNotes[item.id]).map(item => ({
+    category: item.category,
     task: item.task,
     note: openingNotes[item.id]
   }));
@@ -45,12 +276,35 @@ export default function ReportModal({
     note: sellingNotes[item.id]
   }));
 
+  // Create preview report data
+  const previewReportData = {
+    storeName,
+    dateStr: todayStr,
+    leader,
+    progress: {
+      completed: completedOpening,
+      total: totalOpening,
+      percent: openingProgress
+    },
+    rosterShelf,
+    rosterPos,
+    openingChecks,
+    openingNotes,
+    sellingChecks,
+    sellingNotes,
+    kpiValues
+  };
+
   // Generate Report Text
   const generateReportText = () => {
     let text = `🌿 *BÁO CÁO VẬN HÀNH HÀNG NGÀY - LUSH RETAIL* 🌿\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━\n`;
     text += `📍 *Cửa hàng:* ${storeName}\n`;
-    text += `📅 *Ngày:* ${todayStr}\n\n`;
+    text += `📅 *Ngày:* ${todayStr}\n`;
+    if (leader) {
+      text += `👤 *Leader ca:* ${leader}\n`;
+    }
+    text += `━━━━━━━━━━━━━━━━━━━━━━\n\n`;
 
     // Duty Roster
     text += `👥 *PHÂN BỔ NHÂN SỰ TRONG CA:*\n`;
@@ -124,12 +378,19 @@ export default function ReportModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const timeStamp = Date.now();
+    const cleanStoreId = storeName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim();
+    const dateFormatted = new Date().toISOString().split('T')[0];
+    const fileName = `report-${dateFormatted}-${cleanStoreId}-${timeStamp}.html`;
+
     const reportData = {
-      id: `rep-${Date.now()}`,
+      id: `rep-${timeStamp}`,
       storeName,
+      leader,
       date: new Date().toISOString(),
       dateStr: todayStr,
+      template: reportTemplate,
       progress: {
         completed: completedOpening,
         total: totalOpening,
@@ -142,9 +403,43 @@ export default function ReportModal({
       sellingChecks,
       sellingNotes,
       kpiValues,
-      rawText: generateReportText()
+      rawText: generateReportText(),
+      fileName
     };
 
+    const htmlContent = generateReportHTML(reportData, reportTemplate);
+
+    // 1. Try to save locally via the custom Vite dev server API
+    try {
+      const response = await fetch('/api/save-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fileName, htmlContent })
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          console.log('Báo cáo đã được lưu vào thư mục dự án:', result.path);
+        }
+      }
+    } catch (e) {
+      console.warn('API lưu báo cáo cục bộ không khả dụng (đang chạy bản build tĩnh). Sẽ chỉ tải xuống trình duyệt.');
+    }
+
+    // 2. Download the HTML report to local computer downloads folder
+    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // 3. Save report to localStorage database (state)
     onSaveReport(reportData);
 
     // Confetti celebration (B&W/Gray values or default festive)
@@ -160,7 +455,7 @@ export default function ReportModal({
 
   return (
     <div className="modal-overlay">
-      <div className="modal-content animate-scaleUp">
+      <div className="modal-content animate-scaleUp" style={{ maxWidth: '850px', width: '95%' }}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-medium bg-white text-black">
           <div className="flex items-center gap-2">
@@ -175,47 +470,98 @@ export default function ReportModal({
           </button>
         </div>
 
-        {/* Mode Selector */}
-        <div className="flex bg-bg-inset p-2 border-b border-medium gap-2">
-          <span className="text-[10px] text-text-muted font-bold font-sans px-2 py-1.5 flex items-center">
-            MẪU BÁO CÁO:
-          </span>
-          <button
-            onClick={() => setReportTemplate('standard')}
-            className={`px-3 py-1.5 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
-              reportTemplate === 'standard' 
-                ? 'bg-black text-white border-black' 
-                : 'bg-white text-black border-border-medium hover:border-black'
-            }`}
-          >
-            Đầy đủ (Standard)
-          </button>
-          <button
-            onClick={() => setReportTemplate('compact')}
-            className={`px-3 py-1.5 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
-              reportTemplate === 'compact' 
-                ? 'bg-black text-white border-black' 
-                : 'bg-white text-black border-border-medium hover:border-black'
-            }`}
-          >
-            Rút gọn
-          </button>
+        {/* Mode & Preview Selectors */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-bg-inset p-2 border-b border-medium gap-2">
+          <div className="flex gap-2 items-center flex-wrap">
+            <span className="text-[10px] text-text-muted font-bold font-sans px-2 py-1 flex items-center">
+              MẪU BÁO CÁO:
+            </span>
+            <button
+              onClick={() => setReportTemplate('standard')}
+              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
+                reportTemplate === 'standard' 
+                  ? 'bg-black text-white border-black' 
+                  : 'bg-white text-black border-border-medium hover:border-black'
+              }`}
+            >
+              Đầy đủ (Standard)
+            </button>
+            <button
+              onClick={() => setReportTemplate('compact')}
+              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
+                reportTemplate === 'compact' 
+                  ? 'bg-black text-white border-black' 
+                  : 'bg-white text-black border-border-medium hover:border-black'
+              }`}
+            >
+              Rút gọn
+            </button>
+          </div>
+
+          <div className="flex gap-2 items-center flex-wrap border-t sm:border-t-0 pt-2 sm:pt-0 border-medium">
+            <span className="text-[10px] text-text-muted font-bold font-sans px-2 py-1 flex items-center">
+              XEM TRƯỚC:
+            </span>
+            <button
+              onClick={() => setPreviewFormat('text')}
+              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
+                previewFormat === 'text' 
+                  ? 'bg-black text-white border-black' 
+                  : 'bg-white text-black border-border-medium hover:border-black'
+              }`}
+            >
+              Zalo/Telegram (Text)
+            </button>
+            <button
+              onClick={() => setPreviewFormat('web')}
+              className={`px-3 py-1 text-xs font-bold font-sans uppercase tracking-wider border transition-all ${
+                previewFormat === 'web' 
+                  ? 'bg-black text-white border-black' 
+                  : 'bg-white text-black border-border-medium hover:border-black'
+              }`}
+            >
+              Trang Web (Web HTML)
+            </button>
+          </div>
         </div>
 
         {/* Body Preview */}
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset">
-          <div 
-            className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap max-h-[45vh] overflow-y-auto select-all leading-relaxed"
-            style={{ whiteSpace: 'pre-wrap' }}
-          >
-            {generateReportText()}
-          </div>
+          {previewFormat === 'text' ? (
+            <div 
+              className="bg-white border border-medium p-4 font-mono text-[10px] text-black whitespace-pre-wrap h-[55vh] overflow-y-auto select-all leading-relaxed"
+              style={{ whiteSpace: 'pre-wrap' }}
+            >
+              {generateReportText()}
+            </div>
+          ) : (
+            <div className="h-[55vh] overflow-y-auto rounded-none">
+              <FormPreview 
+                storeName={storeName}
+                dateStr={todayStr}
+                leader={leader}
+                rosterShelf={rosterShelf}
+                rosterPos={rosterPos}
+                openingChecks={openingChecks}
+                openingNotes={openingNotes}
+                sellingChecks={sellingChecks}
+                sellingNotes={sellingNotes}
+                kpiValues={kpiValues}
+                reportTemplate={reportTemplate}
+                completedOpening={completedOpening}
+                totalOpening={totalOpening}
+                openingProgress={openingProgress}
+                openingIssues={openingIssues}
+                sellingIssues={sellingIssues}
+              />
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white">
           <span className="text-[10px] text-text-muted font-sans uppercase tracking-wider">
-            * Nhấp vào hộp văn bản để bôi đen nhanh
+            {previewFormat === 'text' ? '* Nhấp vào hộp văn bản để bôi đen nhanh' : '* Có thể mở bản HTML đã tải hoặc bản trên Git để In / xuất PDF'}
           </span>
           <div className="flex gap-2 w-full sm:w-auto">
             <button
@@ -230,7 +576,7 @@ export default function ReportModal({
               onClick={handleSave}
               className="btn-black text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
             >
-              Lưu báo cáo
+              Lưu & Tải Web Báo Cáo
             </button>
           </div>
         </div>

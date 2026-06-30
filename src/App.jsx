@@ -446,6 +446,7 @@ export default function App() {
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         storeName={selectedStore.name}
+        leader={shiftLeader}
         rosterShelf={rosterShelf}
         rosterPos={rosterPos}
         openingChecks={openingChecks}
