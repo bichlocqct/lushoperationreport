@@ -352,6 +352,7 @@ export default function ReportModal({
   const [reportTemplate, setReportTemplate] = useState('standard'); // 'standard' | 'compact'
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
   const [copied, setCopied] = useState(false);
+  const [hasSaved, setHasSaved] = useState(false);
 
   if (!isOpen) return null;
 
@@ -567,13 +568,10 @@ export default function ReportModal({
     return text;
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generateReportText());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const saveReportToHistoryAndLocal = async (silent = false) => {
+    if (hasSaved) return null;
+    setHasSaved(true);
 
-  const handleSave = async () => {
     const timeStamp = Date.now();
     const cleanStoreId = storeName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim();
     const dateFormatted = new Date().toISOString().split('T')[0];
@@ -615,29 +613,44 @@ export default function ReportModal({
         },
         body: JSON.stringify({ fileName, htmlContent })
       });
-      if (response.ok) {
+      if (response.ok && !silent) {
         const result = await response.json();
         if (result.success) {
           console.log('Báo cáo đã được lưu vào thư mục dự án:', result.path);
         }
       }
     } catch (e) {
-      console.warn('API lưu báo cáo cục bộ không khả dụng (đang chạy bản build tĩnh). Sẽ chỉ tải xuống trình duyệt.');
+      if (!silent) console.warn('API save-report failed or unavailable (running production build).');
     }
 
-    // 2. Download the HTML report to local computer downloads folder
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    // 3. Save report to localStorage database (state)
+    // 2. Save report to localStorage database (state)
     onSaveReport(reportData);
+
+    return { reportData, htmlContent, fileName };
+  };
+
+  const handleCopy = async () => {
+    navigator.clipboard.writeText(generateReportText());
+    setCopied(true);
+    await saveReportToHistoryAndLocal(true); // Auto-save silently on copy!
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleSave = async () => {
+    const savedInfo = await saveReportToHistoryAndLocal(false);
+    if (savedInfo) {
+      const { htmlContent, fileName } = savedInfo;
+      // Download the HTML report to local computer downloads folder
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
 
     // Confetti celebration (B&W/Gray values or default festive)
     confetti({
@@ -647,6 +660,13 @@ export default function ReportModal({
       colors: ['#000000', '#ffffff', '#71717a', '#a1a1aa']
     });
 
+    onClose();
+  };
+
+  const handleClose = async () => {
+    if (!hasSaved && (leader || completedOpening > 0)) {
+      await saveReportToHistoryAndLocal(true); // Auto-save silently before closing
+    }
     onClose();
   };
 
@@ -660,7 +680,7 @@ export default function ReportModal({
             <h3 className="text-xs font-sans font-bold uppercase tracking-wider">Khởi Tạo Báo Cáo Ca Trực</h3>
           </div>
           <button 
-            onClick={onClose} 
+            onClick={handleClose} 
             className="text-text-muted hover:text-black transition-colors bg-transparent border-none cursor-pointer"
           >
             <X size={18} />
