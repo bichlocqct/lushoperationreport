@@ -22,7 +22,8 @@ const FormPreview = ({
   openingProgress,
   openingIssues,
   sellingIssues,
-  todayShifts
+  todayShifts,
+  weeklyShiftsRoster
 }) => {
   const kpiCount = reportTemplate === 'standard' ? 'IV' : 'III';
   const shifts = todayShifts || {
@@ -33,6 +34,13 @@ const FormPreview = ({
     middleHours: '',
     afternoonHours: '',
     handoverHours: ''
+  };
+
+  const getWeeklyRosterCell = (shiftKey, dayKey) => {
+    const shiftData = weeklyShiftsRoster?.[shiftKey] || {};
+    const val = shiftData[dayKey] || '';
+    if (!val) return '--';
+    return val.split(';;').filter(name => name.trim() !== '').join(', ');
   };
   
   return (
@@ -104,15 +112,15 @@ const FormPreview = ({
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginBottom: '12px' }}>
               <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
-                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Sáng (${shifts.morningHours})</span>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Sáng ({shifts.morningHours})</span>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.morning || '--'}</span>
               </div>
               <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
-                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Giữa (${shifts.middleHours})</span>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Giữa ({shifts.middleHours})</span>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.middle || '--'}</span>
               </div>
               <div style={{ border: '1px solid #000000', padding: '5px 8px' }}>
-                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Chiều (${shifts.afternoonHours})</span>
+                <span style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px' }}>Ca Chiều ({shifts.afternoonHours})</span>
                 <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#000000' }}>{shifts.afternoon || '--'}</span>
               </div>
             </div>
@@ -142,6 +150,67 @@ const FormPreview = ({
             </div>
           ))}
         </div>
+
+        {/* 4. Weekly Shift Roster Table */}
+        {weeklyShiftsRoster && (
+          <>
+            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '15px', marginBottom: '6px', color: '#52525b', letterSpacing: '0.05em' }}>
+              4. Lịch Trực Tuần Của Cửa Hàng (Weekly Shift Roster)
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '5px' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f4f4f5' }}>
+                  <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'left', width: '12%' }}>Ca Trực</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%' }}>Thứ 2</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%' }}>Thứ 3</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%' }}>Thứ 4</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%' }}>Thứ 5</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%' }}>Thứ 6</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%', backgroundColor: '#fafafa' }}>Thứ 7</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center', width: '12.5%', backgroundColor: '#fafafa' }}>Chủ Nhật</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #000000' }}>
+                  <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>
+                    Ca Sáng<br/><span style={{ fontSize: '6.5px', fontWeight: 'normal', color: '#52525b' }}>({shifts.morningHours || ''})</span>
+                  </td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('morning', 'monday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('morning', 'tuesday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('morning', 'wednesday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('morning', 'thursday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('morning', 'friday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fafafa' }}>{getWeeklyRosterCell('morning', 'saturday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fafafa' }}>{getWeeklyRosterCell('morning', 'sunday')}</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #000000' }}>
+                  <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>
+                    Ca Giữa<br/><span style={{ fontSize: '6.5px', fontWeight: 'normal', color: '#52525b' }}>({shifts.middleHours || ''})</span>
+                  </td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('middle', 'monday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('middle', 'tuesday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('middle', 'wednesday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('middle', 'thursday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('middle', 'friday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fafafa' }}>{getWeeklyRosterCell('middle', 'saturday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fafafa' }}>{getWeeklyRosterCell('middle', 'sunday')}</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #000000' }}>
+                  <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>
+                    Ca Chiều<br/><span style={{ fontSize: '6.5px', fontWeight: 'normal', color: '#52525b' }}>({shifts.afternoonHours || ''})</span>
+                  </td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('afternoon', 'monday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('afternoon', 'tuesday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('afternoon', 'wednesday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('afternoon', 'thursday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{getWeeklyRosterCell('afternoon', 'friday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fafafa' }}>{getWeeklyRosterCell('afternoon', 'saturday')}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center', backgroundColor: '#fafafa' }}>{getWeeklyRosterCell('afternoon', 'sunday')}</td>
+                </tr>
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
 
       {/* II. Checklist Mở Cửa */}
@@ -353,6 +422,8 @@ export default function ReportModal({
     note: sellingNotes[item.id]
   }));
 
+  const weeklyShiftsRoster = weeklyShifts[activeStore.id] || null;
+
   // Create preview report data
   const previewReportData = {
     storeName,
@@ -370,7 +441,8 @@ export default function ReportModal({
     sellingChecks,
     sellingNotes,
     kpiValues,
-    todayShifts
+    todayShifts,
+    weeklyShiftsRoster
   };
 
   // Generate Report Text
@@ -400,6 +472,43 @@ export default function ReportModal({
     text += `• Phụ trách kệ: `;
     const shelfRosterStr = rosterShelf.map(s => `${s.area} (${s.staff || 'N/A'})`).join(', ');
     text += `${shelfRosterStr}\n\n`;
+
+    // Weekly Shifts Roster Info
+    if (weeklyShiftsRoster) {
+      text += `📅 *LỊCH TRỰC TRONG TUẦN (WEEKLY ROSTER):*\n`;
+      const daysMapping = [
+        { key: 'monday', label: 'Thứ 2' },
+        { key: 'tuesday', label: 'Thứ 3' },
+        { key: 'wednesday', label: 'Thứ 4' },
+        { key: 'thursday', label: 'Thứ 5' },
+        { key: 'friday', label: 'Thứ 6' },
+        { key: 'saturday', label: 'Thứ 7' },
+        { key: 'sunday', label: 'Chủ Nhật' }
+      ];
+      const getRosterCellForText = (shiftKey, dayKey) => {
+        const val = weeklyShiftsRoster[shiftKey]?.[dayKey] || '';
+        if (!val) return '';
+        return val.split(';;').filter(name => name.trim() !== '').join(', ');
+      };
+      
+      daysMapping.forEach(d => {
+        const morningName = getRosterCellForText('morning', d.key);
+        const middleName = getRosterCellForText('middle', d.key);
+        const afternoonName = getRosterCellForText('afternoon', d.key);
+        
+        let shiftsLine = [];
+        if (morningName) shiftsLine.push(`Sáng: ${morningName}`);
+        if (middleName) shiftsLine.push(`Giữa: ${middleName}`);
+        if (afternoonName) shiftsLine.push(`Chiều: ${afternoonName}`);
+        
+        if (shiftsLine.length > 0) {
+          text += `• *${d.label}:* ${shiftsLine.join(' | ')}\n`;
+        } else {
+          text += `• *${d.label}:* Nghỉ\n`;
+        }
+      });
+      text += `\n`;
+    }
 
     // Opening Checklists
     text += `✅ *CHECKLIST MỞ CỬA (OPENING):*\n`;
@@ -491,7 +600,8 @@ export default function ReportModal({
       kpiValues,
       rawText: generateReportText(),
       fileName,
-      todayShifts
+      todayShifts,
+      weeklyShiftsRoster
     };
 
     const htmlContent = generateReportHTML(reportData, reportTemplate);

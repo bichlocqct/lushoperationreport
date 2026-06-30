@@ -20,7 +20,8 @@ export function generateReportHTML(reportData, template = 'standard') {
     sellingChecks = {},
     sellingNotes = {},
     kpiValues = {},
-    todayShifts
+    todayShifts,
+    weeklyShiftsRoster
   } = reportData;
 
   // Process opening checklists issues
@@ -81,7 +82,75 @@ export function generateReportHTML(reportData, template = 'standard') {
     </div>
   `).join('');
 
-  // 4. Complete Opening Checklist Items with Checkbox styling
+  // 4. Weekly shifts roster HTML
+  let weeklyRosterHTML = '';
+  if (weeklyShiftsRoster) {
+    const getCell = (shiftKey, dayKey) => {
+      const val = weeklyShiftsRoster[shiftKey]?.[dayKey] || '';
+      if (!val) return '--';
+      return val.split(';;').filter(name => name.trim() !== '').join(', ');
+    };
+
+    weeklyRosterHTML = `
+      <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; margin-top: 15px; margin-bottom: 6px; color: #52525b; letter-spacing: 0.05em; page-break-inside: avoid;">
+        4. Lịch Trực Tuần Của Cửa Hàng (Weekly Shift Roster)
+      </div>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 5px; page-break-inside: avoid;">
+        <thead>
+          <tr style="background-color: #f4f4f5;">
+            <th style="border: 1px solid #000000; padding: 5px 6px; font-size: 7.5px; font-weight: bold; text-align: left; width: 12%;">Ca Trực</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%;">Thứ 2</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%;">Thứ 3</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%;">Thứ 4</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%;">Thứ 5</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%;">Thứ 6</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%; background-color: #fafafa;">Thứ 7</th>
+            <th style="border: 1px solid #000000; padding: 5px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 12.5%; background-color: #fafafa;">Chủ Nhật</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid #000000;">
+            <td style="border: 1px solid #000000; padding: 5px 6px; font-size: 8px; font-weight: bold;">
+              Ca Sáng<br><span style="font-size: 6.5px; font-weight: normal; color: #52525b;">(${todayShifts?.morningHours || ''})</span>
+            </td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('morning', 'monday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('morning', 'tuesday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('morning', 'wednesday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('morning', 'thursday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('morning', 'friday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('morning', 'saturday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('morning', 'sunday')}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #000000;">
+            <td style="border: 1px solid #000000; padding: 5px 6px; font-size: 8px; font-weight: bold;">
+              Ca Giữa<br><span style="font-size: 6.5px; font-weight: normal; color: #52525b;">(${todayShifts?.middleHours || ''})</span>
+            </td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('middle', 'monday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('middle', 'tuesday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('middle', 'wednesday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('middle', 'thursday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('middle', 'friday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('middle', 'saturday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('middle', 'sunday')}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #000000;">
+            <td style="border: 1px solid #000000; padding: 5px 6px; font-size: 8px; font-weight: bold;">
+              Ca Chiều<br><span style="font-size: 6.5px; font-weight: normal; color: #52525b;">(${todayShifts?.afternoonHours || ''})</span>
+            </td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('afternoon', 'monday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('afternoon', 'tuesday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('afternoon', 'wednesday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('afternoon', 'thursday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center;">${getCell('afternoon', 'friday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('afternoon', 'saturday')}</td>
+            <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('afternoon', 'sunday')}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
+
+  // Complete Opening Checklist Items with Checkbox styling
   const openingItemsHTML = OPENING_CHECKLIST_TEMPLATE.map(item => {
     const isChecked = openingChecks[item.id];
     const note = openingNotes[item.id];
@@ -441,6 +510,9 @@ export function generateReportHTML(reportData, template = 'standard') {
       <div class="grid-shelves">
         ${shelfHTML}
       </div>
+
+      <!-- 4. Weekly Shifts Roster table -->
+      ${weeklyRosterHTML}
     </div>
 
     <!-- II. Checklist Mở Cửa (Opening) -->
