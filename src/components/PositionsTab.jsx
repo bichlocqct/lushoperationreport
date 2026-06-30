@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Info, Shield, HelpCircle } from 'lucide-react';
+import { Clock, Info, Shield, HelpCircle, Package, Palette, Sparkles } from 'lucide-react';
 import { POSITION_SOP } from '../data/initialData';
 
 export default function PositionsTab({ rosterPos, setRosterPos }) {
@@ -16,6 +16,39 @@ export default function PositionsTab({ rosterPos, setRosterPos }) {
 
   const handlePosStaffChange = (id, val) => {
     setRosterPos(prev => prev.map(item => item.id === id ? { ...item, staff: val } : item));
+  };
+
+  const getTabConfig = (tabKey) => {
+    switch (tabKey) {
+      case 'kho':
+        return {
+          label: 'KHO',
+          desc: 'Quản lý kho hàng',
+          icon: Package,
+          activeClass: 'sop-filter-btn-kho'
+        };
+      case 'vmd':
+        return {
+          label: 'VMD',
+          desc: 'Visual Merchandising',
+          icon: Palette,
+          activeClass: 'sop-filter-btn-vmd'
+        };
+      case 'vesinh':
+        return {
+          label: 'VỆ SINH',
+          desc: 'Vệ sinh cửa hàng',
+          icon: Sparkles,
+          activeClass: 'sop-filter-btn-vesinh'
+        };
+      default:
+        return {
+          label: tabKey.toUpperCase(),
+          desc: '',
+          icon: Info,
+          activeClass: ''
+        };
+    }
   };
 
   const currentSop = POSITION_SOP[activeSopTab];
@@ -73,28 +106,34 @@ export default function PositionsTab({ rosterPos, setRosterPos }) {
         {/* SOP Guidelines Documentation */}
         <div className="lg:col-span-2 space-y-4">
           <div className="bento-card space-y-6 h-full">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-light pb-3">
-              <div className="flex items-center gap-2">
-                <Info size={16} className="text-emerald-600" />
-                <h3 className="text-xs font-display font-bold uppercase tracking-wider text-text-dark">Quy Trình Hoạt Động Chuẩn (SOP)</h3>
+            <div className="flex flex-col gap-4 border-b border-light pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-slate-900 text-white rounded-lg">
+                  <Info size={18} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-display font-extrabold uppercase tracking-wider text-text-dark">Quy Trình Hoạt Động Chuẩn (SOP)</h3>
+                  <p className="text-xs text-text-muted mt-0.5">Tiêu chuẩn vận hành hàng ngày cho các vị trí cửa hàng</p>
+                </div>
               </div>
 
-              {/* SOP Tabs Switcher */}
-              <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              {/* SOP Tabs Switcher as Filter Bar */}
+              <div className="sop-filter-container">
                 {['kho', 'vmd', 'vesinh'].map(tabKey => {
-                  const label = tabKey === 'kho' ? 'KHO' : tabKey === 'vmd' ? 'VMD' : 'VỆ SINH';
+                  const config = getTabConfig(tabKey);
+                  const IconComponent = config.icon;
                   const isActive = activeSopTab === tabKey;
                   return (
                     <button
                       key={tabKey}
                       onClick={() => setActiveSopTab(tabKey)}
-                      className={`px-3 py-1 text-[10px] font-bold font-display uppercase tracking-wider rounded-md transition-all ${
-                        isActive
-                          ? 'bg-black text-white shadow-sm'
-                          : 'text-text-muted hover:text-black'
-                      }`}
+                      className={`sop-filter-btn ${isActive ? `active ${config.activeClass}` : ''}`}
                     >
-                      {label}
+                      <IconComponent size={18} className="sop-filter-icon" />
+                      <div className="text-left">
+                        <span className="block sop-filter-label">{config.label}</span>
+                        <span className="block sop-filter-desc">{config.desc}</span>
+                      </div>
                     </button>
                   );
                 })}
@@ -105,31 +144,31 @@ export default function PositionsTab({ rosterPos, setRosterPos }) {
             <div className="space-y-6">
               {currentSop.sections.map((section, secIdx) => (
                 <div key={secIdx} className="space-y-3">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold font-display uppercase tracking-wider text-emerald-800 bg-emerald-50 w-fit px-2.5 py-1 rounded-full border border-emerald-100">
-                    <Clock size={12} className="text-emerald-600" />
+                  <div className="sop-time-badge">
+                    <Clock size={14} />
                     <span>Thời điểm: {section.time}</span>
                   </div>
 
-                  <div className="table-container overflow-x-auto">
-                    <table className="lush-table text-left w-full border-collapse">
+                  <div className="table-container overflow-x-auto border border-slate-200 shadow-sm rounded-xl">
+                    <table className="sop-table text-left w-full border-collapse">
                       <thead>
                         <tr>
-                          <th className="p-3 text-xs font-bold border-b border-medium w-40">Công việc</th>
-                          <th className="p-3 text-xs font-bold border-b border-medium w-52">Mục đích</th>
-                          <th className="p-3 text-xs font-bold border-b border-medium">Cách thực hiện</th>
+                          <th className="w-1/4">Công việc</th>
+                          <th className="w-1/4">Mục đích</th>
+                          <th className="w-2/4">Cách thực hiện</th>
                         </tr>
                       </thead>
                       <tbody>
                         {section.tasks.map((task, taskIdx) => (
                           <tr key={taskIdx} className="hover:bg-slate-50/50">
-                            <td className="p-3 border-b border-medium font-bold text-xs text-text-dark vertical-top align-top">
+                            <td className="sop-table-task-name">
                               {task.name}
                             </td>
-                            <td className="p-3 border-b border-medium text-xs text-text-muted vertical-top align-top">
+                            <td className="sop-table-task-purpose">
                               {task.purpose}
                             </td>
-                            <td className="p-3 border-b border-medium text-xs text-slate-800 vertical-top align-top">
-                              <ul className="list-disc pl-4 space-y-1.5">
+                            <td>
+                              <ul className="sop-table-steps-list">
                                 {task.steps.map((step, stepIdx) => (
                                   <li key={stepIdx}>{step}</li>
                                 ))}
