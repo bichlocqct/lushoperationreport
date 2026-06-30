@@ -233,7 +233,7 @@ export default function ChecklistsTab({
                   </tr>
                 ))}
 
-                {getFilteredOpeningItems().length === 0 && (
+                {OPENING_CHECKLIST_TEMPLATE.length === 0 && (
                   <tr>
                     <td colSpan="5" className="p-8 text-center text-text-muted font-display text-xs uppercase font-bold">
                       Không có đầu việc nào.
