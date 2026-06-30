@@ -53,9 +53,11 @@ export default function ShiftsTab({
       const timeRange = parts[0].trim();
       const duration = parts[1].replace(')', '').trim();
       return (
-        <span className="text-[9px] text-text-muted mt-0.5 block whitespace-nowrap">
-          Giao ca chuẩn: <strong className="text-text-dark font-mono">{timeRange}</strong> ({duration})
-        </span>
+        <div className="mt-0.5 leading-tight">
+          <span className="text-[9px] text-text-muted block">Giao ca chuẩn:</span>
+          <span className="text-[10px] text-text-dark font-mono font-bold block mt-0.5 whitespace-nowrap">{timeRange}</span>
+          <span className="text-[9px] text-text-muted font-medium block whitespace-nowrap">({duration})</span>
+        </div>
       );
     }
     return <span className="text-[9px] text-text-dark font-semibold mt-0.5 block">{timeStr}</span>;

@@ -1690,5 +1690,29 @@ ul.space-y-3 li {
   color: #334155 !important;
 }
 
+/* Tailwind Utility Class Polyfills */
+.whitespace-nowrap {
+  white-space: nowrap !important;
+}
+
+.bg-slate-100 {
+  background-color: #f1f5f9 !important;
+}
+
+.border-slate-200\/60 {
+  border-color: rgba(226, 232, 240, 0.6) !important;
+}
+
+.px-1\.5 {
+  padding-left: 0.375rem !important;
+  padding-right: 0.375rem !important;
+}
+
+.py-0\.5 {
+  padding-top: 0.125rem !important;
+  padding-bottom: 0.125rem !important;
+}
+
+
 
 
