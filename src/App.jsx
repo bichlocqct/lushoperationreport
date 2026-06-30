@@ -314,7 +314,7 @@ export default function App() {
           {/* Quick config */}
           <div className="space-y-2">
             <div>
-              <label className="lush-label text-[10px] text-white">CỬA HÀNG</label>
+              <label className="lush-label font-display" style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '10px' }}>CỬA HÀNG</label>
               <select 
                 value={selectedStoreId} 
                 onChange={(e) => setSelectedStoreId(e.target.value)}
@@ -327,12 +327,12 @@ export default function App() {
             </div>
 
             <div>
-              <label className="lush-label text-[10px] text-white font-display">LEADER</label>
+              <label className="lush-label font-display" style={{ color: '#ffffff', fontWeight: 'bold', fontSize: '10px' }}>LEADER</label>
               <input 
                 type="text" 
                 value={shiftLeader}
                 onChange={(e) => setShiftLeader(e.target.value)}
-                placeholder="Nhập tên trưởng ca..."
+                placeholder="Nhập tên leader..."
                 className={`input-text py-1.5 px-2.5 text-xs bg-bg-inset-dark border-border-dark text-white ${!shiftLeader ? 'sidebar-input-pulse' : ''}`}
               />
             </div>
