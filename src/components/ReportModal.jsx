@@ -636,8 +636,8 @@ export default function ReportModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSave = async () => {
-    const savedInfo = await saveReportToHistoryAndLocal(false);
+  const handleDownloadOnly = async () => {
+    const savedInfo = await saveReportToHistoryAndLocal(true); // Save silently first
     if (savedInfo) {
       const { htmlContent, fileName } = savedInfo;
       // Download the HTML report to local computer downloads folder
@@ -651,6 +651,10 @@ export default function ReportModal({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     }
+  };
+
+  const handleSave = async () => {
+    await saveReportToHistoryAndLocal(false); // Explicit save to history
 
     // Confetti celebration (B&W/Gray values or default festive)
     confetti({
@@ -792,10 +796,19 @@ export default function ReportModal({
             </button>
             
             <button
+              onClick={handleDownloadOnly}
+              className="btn-white text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
+            >
+              <Globe size={14} />
+              Tải File HTML
+            </button>
+
+            <button
               onClick={handleSave}
               className="btn-black text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
             >
-              Lưu & Tải Web Báo Cáo
+              <Save size={14} />
+              Lưu Vào Lịch Sử
             </button>
           </div>
         </div>
