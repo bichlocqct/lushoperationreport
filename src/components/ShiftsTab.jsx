@@ -284,7 +284,7 @@ export default function ShiftsTab({
                         >
                           +
                         </button>
-                        <span className="text-[8px] text-text-muted mt-0.5 font-mono">{hours}</span>
+                        <span className="text-[8px] text-text-muted mt-0.5 font-mono whitespace-nowrap">{hours}</span>
                       </div>
                     </td>
                   );
@@ -334,7 +334,7 @@ export default function ShiftsTab({
                         >
                           +
                         </button>
-                        <span className="text-[8px] text-text-muted mt-0.5 font-mono">{hours}</span>
+                        <span className="text-[8px] text-text-muted mt-0.5 font-mono whitespace-nowrap">{hours}</span>
                       </div>
                     </td>
                   );
@@ -384,7 +384,7 @@ export default function ShiftsTab({
                         >
                           +
                         </button>
-                        <span className="text-[8px] text-text-muted mt-0.5 font-mono">{hours}</span>
+                        <span className="text-[8px] text-text-muted mt-0.5 font-mono whitespace-nowrap">{hours}</span>
                       </div>
                     </td>
                   );

@@ -1713,6 +1713,11 @@ ul.space-y-3 li {
   padding-bottom: 0.125rem !important;
 }
 
+.overflow-x-auto {
+  overflow-x: auto !important;
+}
+
+
 
 
 
