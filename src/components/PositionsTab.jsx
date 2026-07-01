@@ -129,10 +129,7 @@ export default function PositionsTab({ rosterPos, setRosterPos }) {
                       className={`sop-filter-btn ${isActive ? `active ${config.activeClass}` : ''}`}
                     >
                       <IconComponent size={18} className="sop-filter-icon" />
-                      <div className="text-left">
-                        <span className="block sop-filter-label">{config.label}</span>
-                        <span className="block sop-filter-desc">{config.desc}</span>
-                      </div>
+                      <span className="sop-filter-label">{config.label}</span>
                     </button>
                   );
                 })}
