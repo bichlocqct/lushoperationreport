@@ -611,7 +611,7 @@ export default function ReportModal({
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ fileName, htmlContent })
+        body: JSON.stringify({ fileName, htmlContent, reportData })
       });
       if (response.ok && !silent) {
         const result = await response.json();

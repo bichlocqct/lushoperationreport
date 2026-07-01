@@ -439,6 +439,16 @@ export default function HistoryTab({ reports, onDeleteReport }) {
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
+                      <a
+                        href={`/reports/${report.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-1.5 hover:text-black text-text-muted transition-colors rounded hover:bg-bg-inset flex items-center"
+                        title="Mở liên kết SSR báo cáo"
+                      >
+                        <Globe size={14} />
+                      </a>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -502,13 +512,24 @@ export default function HistoryTab({ reports, onDeleteReport }) {
                             {isCopied ? 'Đã copy!' : 'Sao chép Text'}
                           </button>
                         ) : (
-                          <button
-                            onClick={() => handleDownloadHTML(report)}
-                            className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
-                          >
-                            <Globe size={12} />
-                            Tải HTML (Web)
-                          </button>
+                          <div className="flex gap-3">
+                            <a
+                              href={`/reports/${report.id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
+                            >
+                              <Globe size={12} />
+                              Mở Link SSR
+                            </a>
+                            <button
+                              onClick={() => handleDownloadHTML(report)}
+                              className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
+                            >
+                              <Globe size={12} />
+                              Tải HTML (Web)
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

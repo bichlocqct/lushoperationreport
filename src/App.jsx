@@ -131,16 +131,36 @@ export default function App() {
   // Modal visibility
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  // Load reports and today's session from localStorage on mount
+  // Load reports and today's session from API (with localStorage fallback) on mount
   useEffect(() => {
-    const savedReports = localStorage.getItem('lush_operation_reports');
-    if (savedReports) {
+    const fetchReports = async () => {
       try {
-        setReports(JSON.parse(savedReports));
+        const response = await fetch('/api/reports');
+        if (response.ok) {
+          const dbReports = await response.json();
+          if (Array.isArray(dbReports) && dbReports.length > 0) {
+            setReports(dbReports);
+            // Đồng bộ lại local storage cho chế độ offline
+            localStorage.setItem('lush_operation_reports', JSON.stringify(dbReports));
+            return;
+          }
+        }
       } catch (e) {
-        console.error('Error parsing reports from localStorage', e);
+        console.warn('Không thể tải báo cáo từ API backend, sử dụng dữ liệu offline từ localStorage.', e);
       }
-    }
+
+      // Fallback về localStorage nếu API lỗi hoặc không khả dụng
+      const savedReports = localStorage.getItem('lush_operation_reports');
+      if (savedReports) {
+        try {
+          setReports(JSON.parse(savedReports));
+        } catch (e) {
+          console.error('Error parsing reports from localStorage', e);
+        }
+      }
+    };
+
+    fetchReports();
 
     const savedLunchStaff = localStorage.getItem('lush_lunch_staff');
     if (savedLunchStaff) {
@@ -182,10 +202,18 @@ export default function App() {
     localStorage.setItem('lush_operation_reports', JSON.stringify(updatedReports));
   };
 
-  const handleDeleteReport = (reportId) => {
+  const handleDeleteReport = async (reportId) => {
     const updatedReports = reports.filter(r => r.id !== reportId);
     setReports(updatedReports);
     localStorage.setItem('lush_operation_reports', JSON.stringify(updatedReports));
+
+    try {
+      await fetch(`/api/reports/${reportId}`, {
+        method: 'DELETE'
+      });
+    } catch (e) {
+      console.error('Không thể xóa báo cáo ở backend:', e);
+    }
   };
 
   const handleClearForm = () => {
