@@ -21,7 +21,8 @@ export function generateReportHTML(reportData, template = 'standard') {
     sellingNotes = {},
     kpiValues = {},
     todayShifts,
-    weeklyShiftsRoster
+    weeklyShiftsRoster,
+    fileName
   } = reportData;
 
   // Process opening checklists issues
@@ -460,6 +461,69 @@ export function generateReportHTML(reportData, template = 'standard') {
   </style>
 </head>
 <body>
+
+  <!-- Floating/Sticky Toolbar for Web View (no-print) -->
+  <div class="no-print" style="position: sticky; top: 0; left: 0; right: 0; background-color: #000000; color: #ffffff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.15); z-index: 1000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; border-bottom: 2px solid #ffffff;">
+    <div style="font-weight: 900; font-size: 14px; letter-spacing: 0.1em;">LUSH OPERATION REPORT</div>
+    <div style="display: flex; gap: 12px;">
+      <button onclick="window.print()" style="background-color: #ffffff; color: #000000; border: 1px solid #ffffff; padding: 6px 16px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;">
+        In Báo Cáo / PDF
+      </button>
+      <button id="git-push-btn" onclick="pushToGit('${fileName}')" style="background-color: #24292e; color: #ffffff; border: 1px solid #444d56; padding: 6px 16px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; display: flex; align-items: center; gap: 6px;">
+        Đưa lên GitHub
+      </button>
+      <button onclick="downloadSelf()" style="background-color: transparent; color: #ffffff; border: 1px solid #ffffff; padding: 6px 16px; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 2px; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s;">
+        Tải File HTML
+      </button>
+    </div>
+  </div>
+
+  <script>
+    async function pushToGit(fileName) {
+      const btn = document.getElementById('git-push-btn');
+      const originalText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = 'Đang đưa lên GitHub...';
+      try {
+        const response = await fetch('/api/git-push', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fileName })
+        });
+        const result = await response.json();
+        if (result.success) {
+          alert('Đã đưa báo cáo lên GitHub thành công!');
+        } else {
+          alert('Lỗi khi đẩy Git: ' + result.error);
+        }
+      } catch (e) {
+        alert('Không thể kết nối đến backend server để đẩy Git. Tính năng này chỉ hoạt động khi chạy local.');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+      }
+    }
+
+    function downloadSelf() {
+      // Nhân bản document và loại bỏ thanh toolbar no-print trước khi tải về
+      const docClone = document.documentElement.cloneNode(true);
+      const toolbar = docClone.querySelector('.no-print');
+      if (toolbar) toolbar.remove();
+      
+      const htmlContent = '<!DOCTYPE html>\n' + docClone.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '${fileName}';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+  </script>
 
   <div class="form-wrapper">
     <!-- Header Block -->

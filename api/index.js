@@ -142,6 +142,30 @@ app.post('/api/save-report', async (req, res) => {
   }
 });
 
+// API: Đẩy báo cáo lên GitHub thủ công
+app.post('/api/git-push', async (req, res) => {
+  if (process.env.VERCEL) {
+    return res.status(400).json({ success: false, error: 'Tính năng Git push chỉ hoạt động ở môi trường local.' });
+  }
+
+  try {
+    const { fileName } = req.body;
+    const rootDir = path.resolve(__dirname, '..');
+
+    const gitCmd = `git add . && git commit -m "Manual-add report: ${fileName || 'report'}" && git push`;
+    exec(gitCmd, { cwd: rootDir }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`[Git Sync Error]: ${error.message}`);
+        return res.status(500).json({ success: false, error: error.message });
+      }
+      console.log(`[Git Sync Success]:\n${stdout}`);
+      res.status(200).json({ success: true, log: stdout });
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // API: Lấy danh sách toàn bộ báo cáo
 app.get('/api/reports', async (req, res) => {
   try {

@@ -654,8 +654,8 @@ export default function ReportModal({
   };
 
   const handleSave = async () => {
-    await saveReportToHistoryAndLocal(false); // Explicit save to history
-
+    const result = await saveReportToHistoryAndLocal(false); // Explicit save to history
+ 
     // Confetti celebration (B&W/Gray values or default festive)
     confetti({
       particleCount: 120,
@@ -663,7 +663,11 @@ export default function ReportModal({
       origin: { y: 0.6 },
       colors: ['#000000', '#ffffff', '#71717a', '#a1a1aa']
     });
-
+ 
+    if (result && result.reportData) {
+      window.open(`/reports/${result.reportData.id}`, '_blank');
+    }
+ 
     onClose();
   };
 
