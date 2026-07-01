@@ -2,8 +2,15 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -101,6 +108,32 @@ app.post('/api/save-report', async (req, res) => {
       },
       { new: true, upsert: true }
     );
+
+    // Lưu file HTML cục bộ và đẩy lên GitHub nếu chạy ở local
+    if (!process.env.VERCEL) {
+      try {
+        const rootDir = path.resolve(__dirname, '..');
+        const reportsDir = path.join(rootDir, 'reports');
+        if (!fs.existsSync(reportsDir)) {
+          fs.mkdirSync(reportsDir, { recursive: true });
+        }
+        const filePath = path.join(reportsDir, fileName);
+        fs.writeFileSync(filePath, htmlContent, 'utf-8');
+        console.log(`[Local File] Đã lưu file báo cáo tại: ${filePath}`);
+
+        // Tự động add, commit và push lên GitHub
+        const gitCmd = `git add . && git commit -m "Auto-add report: ${fileName}" && git push`;
+        exec(gitCmd, { cwd: rootDir }, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`[Git Sync Error]: ${error.message}`);
+            return;
+          }
+          console.log(`[Git Sync Success]:\n${stdout}`);
+        });
+      } catch (err) {
+        console.error("Lỗi khi ghi file hoặc đẩy Git:", err);
+      }
+    }
 
     res.status(200).json({ success: true, path: `/reports/${reportId}`, data: updatedReport });
   } catch (error) {

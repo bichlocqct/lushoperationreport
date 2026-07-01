@@ -693,7 +693,7 @@ export default function ReportModal({
 
         {/* Body Preview */}
         <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset">
-          <div className="h-[45vh] overflow-y-auto rounded-none">
+          <div className="rounded-none">
             <FormPreview 
               storeName={storeName}
               dateStr={todayStr}
