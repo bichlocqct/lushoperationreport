@@ -377,7 +377,32 @@ export default function App() {
 
           <button 
             onClick={handleClearForm}
-            className="text-[10px] text-text-muted hover:text-white transition-colors flex items-center justify-center gap-1 font-display uppercase tracking-wider"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#a1a1aa',
+              fontSize: '10px',
+              fontWeight: '700',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              width: '100%',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              borderRadius: '4px'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.color = '#ffffff';
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.color = '#a1a1aa';
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <RotateCcw size={10} />
             Reset Dữ Liệu Hôm Nay
