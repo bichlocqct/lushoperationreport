@@ -344,7 +344,7 @@ const FormPreview = ({
   );
 };
 
-export default function HistoryTab({ reports, onDeleteReport }) {
+export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal }) {
   const [expandedReportId, setExpandedReportId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
@@ -399,11 +399,18 @@ export default function HistoryTab({ reports, onDeleteReport }) {
           <div className="w-12 h-12 bg-bg-inset border border-medium rounded-md flex items-center justify-center">
             <ShoppingBag size={20} className="text-black" />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-1 flex flex-col items-center gap-3">
             <h3 className="text-sm font-display font-bold uppercase tracking-wider text-black">Chưa có báo cáo nào</h3>
             <p className="text-xs text-text-muted max-w-sm">
-              Sau khi điền thông số ca và hoàn tất checklist, bạn hãy chọn "Xuất Báo Cáo" ở góc dưới bên trái và lưu lại.
+              Sau khi điền thông số ca và hoàn tất checklist, bạn hãy chọn "Xuất Báo Cáo" ở góc dưới bên trái của menu chính hoặc bấm trực tiếp nút bên dưới để tạo báo cáo.
             </p>
+            <button
+              onClick={onOpenExportModal}
+              className="btn-black text-xs py-2 px-6 flex items-center justify-center gap-1.5 mt-2"
+            >
+              <FileText size={14} />
+              Tạo & Xuất Báo Cáo Ngay
+            </button>
           </div>
         </div>
       ) : (

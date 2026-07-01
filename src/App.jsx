@@ -489,6 +489,7 @@ export default function App() {
             <HistoryTab 
               reports={reports}
               onDeleteReport={handleDeleteReport}
+              onOpenExportModal={() => setIsReportModalOpen(true)}
             />
           )}
         </div>
