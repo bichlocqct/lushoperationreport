@@ -542,11 +542,11 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                     </div>
 
                     {previewFormat === 'text' ? (
-                      <pre className="bg-white p-4 border border-border-medium rounded-none font-mono text-[10px] leading-relaxed text-black whitespace-pre-wrap select-all overflow-y-auto" style={{ maxHeight: '35vh' }}>
+                      <pre className="bg-white p-4 border border-border-medium rounded-none font-mono text-[10px] leading-relaxed text-black whitespace-pre-wrap select-all" style={{ maxHeight: '35vh', overflowY: 'auto' }}>
                         {report.rawText}
                       </pre>
                     ) : (
-                      <div className="bg-white border border-border-medium overflow-y-auto rounded-none" style={{ height: '55vh' }}>
+                      <div className="bg-white border border-border-medium rounded-none" style={{ height: '55vh', overflowY: 'auto' }}>
                         <FormPreview 
                           storeName={report.storeName}
                           dateStr={report.dateStr}
