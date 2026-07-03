@@ -665,7 +665,7 @@ export default function ReportModal({
     });
  
     if (result && result.reportData) {
-      window.open(`/reports/${result.reportData.id}`, '_blank');
+      window.open(`https://lushoperationsreport.vercel.app/reports/${result.reportData.id}`, '_blank');
     }
  
     onClose();

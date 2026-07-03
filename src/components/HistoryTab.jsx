@@ -447,7 +447,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                     </div>
                     <div className="flex items-center gap-1">
                       <a
-                        href={`/reports/${report.id}`}
+                        href={`https://lushoperationsreport.vercel.app/reports/${report.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
@@ -521,7 +521,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                         ) : (
                           <div className="flex gap-3">
                             <a
-                              href={`/reports/${report.id}`}
+                              href={`https://lushoperationsreport.vercel.app/reports/${report.id}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
