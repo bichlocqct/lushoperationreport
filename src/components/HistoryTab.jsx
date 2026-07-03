@@ -427,31 +427,31 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                 {/* Header Card Summary */}
                 <div 
                   onClick={() => toggleExpand(report.id)}
-                  className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:bg-bg-inset transition-colors"
+                  className="history-header-card"
                 >
-                  <div className="flex items-start sm:items-center gap-3">
-                    <div className="p-2 bg-bg-inset border border-black flex-shrink-0">
+                  <div className="history-header-left">
+                    <div className="history-header-icon-box">
                       <FileText size={16} className="text-black" />
                     </div>
-                    <div>
-                      <strong className="text-xs font-bold font-display uppercase tracking-wider text-black block">{report.storeName}</strong>
-                      <span className="text-[10px] text-text-muted block mt-0.5">{report.dateStr}</span>
+                    <div className="history-header-details">
+                      <strong className="history-header-store">{report.storeName}</strong>
+                      <span className="history-header-date">{report.dateStr}</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 self-end sm:self-center">
-                    <div className="text-right">
-                      <span className="badge-bw text-[9px]">
+                  <div className="history-header-right">
+                    <div>
+                      <span className="history-header-badge">
                         Mở cửa: {report.progress.percent}%
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="history-header-actions">
                       <a
                         href={`https://lushoperationsreport.vercel.app/reports/${report.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="p-1.5 hover:text-black text-text-muted transition-colors rounded hover:bg-bg-inset flex items-center"
+                        className="history-action-btn"
                         title="Mở liên kết SSR báo cáo"
                       >
                         <Globe size={14} />
@@ -461,19 +461,20 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                           e.stopPropagation();
                           handleCopyText(report.id, report.rawText);
                         }}
-                        className="p-1.5 hover:text-black text-text-muted transition-colors rounded hover:bg-bg-inset"
+                        className="history-action-btn"
+                        style={{ color: isCopied ? '#10b981' : undefined }}
                         title="Sao chép nhanh báo cáo"
                       >
-                        {isCopied ? <Check size={14} className="text-black" /> : <Copy size={14} />}
+                        {isCopied ? <Check size={14} /> : <Copy size={14} />}
                       </button>
                       <button
                         onClick={(e) => confirmDelete(e, report.id)}
-                        className="p-1.5 hover:text-black text-text-muted transition-colors rounded hover:bg-bg-inset"
+                        className="history-action-btn-delete"
                         title="Xóa báo cáo"
                       >
                         <Trash2 size={14} />
                       </button>
-                      <span className="text-text-muted pl-1">
+                      <span className="history-header-eye">
                         {isExpanded ? <EyeOff size={14} /> : <Eye size={14} />}
                       </span>
                     </div>
