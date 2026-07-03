@@ -1,5 +1,5 @@
 import express from 'express';
-import mongoose from 'mongoose';
+import pg from 'pg';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import fs from 'fs';
@@ -17,57 +17,55 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Cho phép gửi báo cáo HTML dung lượng lớn
 
-// Cấu hình kết nối MongoDB
-const MONGODB_URI = process.env.MONGODB_URI;
+// Cấu hình kết nối PostgreSQL
+const { Pool } = pg;
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/report_lush';
 
-let isConnected = false;
-async function connectDB() {
-  if (isConnected) return;
-  if (!MONGODB_URI) {
-    console.warn("CẢNH BÁO: MONGODB_URI chưa được định nghĩa trong biến môi trường!");
-    return;
-  }
+const pool = new Pool({
+  connectionString,
+  ssl: connectionString.includes('localhost') || connectionString.includes('127.0.0.1') ? false : { rejectUnauthorized: false }
+});
+
+let isTableCreated = false;
+async function initDB() {
+  if (isTableCreated) return;
   try {
-    await mongoose.connect(MONGODB_URI);
-    isConnected = true;
-    console.log("Đã kết nối thành công với MongoDB");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reports (
+        id SERIAL PRIMARY KEY,
+        report_id VARCHAR(50) UNIQUE NOT NULL,
+        file_name VARCHAR(255) NOT NULL,
+        html_content TEXT NOT NULL,
+        store_name VARCHAR(255),
+        leader VARCHAR(255),
+        date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        date_str VARCHAR(100),
+        template VARCHAR(50),
+        progress JSONB,
+        roster_shelf JSONB,
+        roster_pos JSONB,
+        opening_checks JSONB,
+        opening_notes JSONB,
+        selling_checks JSONB,
+        selling_notes JSONB,
+        kpi_values JSONB,
+        raw_text TEXT,
+        today_shifts JSONB,
+        weekly_shifts_roster JSONB,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    isTableCreated = true;
+    console.log("Đã kết nối thành công với PostgreSQL và khởi tạo bảng reports");
   } catch (err) {
-    console.error("Lỗi kết nối MongoDB:", err);
+    console.error("Lỗi khởi tạo bảng PostgreSQL:", err);
   }
 }
 
-// Thiết kế Schema cho Report
-const reportSchema = new mongoose.Schema({
-  reportId: { type: String, required: true, unique: true },
-  fileName: { type: String, required: true },
-  htmlContent: { type: String, required: true },
-  storeName: String,
-  leader: String,
-  date: { type: Date, default: Date.now },
-  dateStr: String,
-  template: String,
-  progress: {
-    completed: Number,
-    total: Number,
-    percent: Number
-  },
-  rosterShelf: Array,
-  rosterPos: Array,
-  openingChecks: Object,
-  openingNotes: Object,
-  sellingChecks: Object,
-  sellingNotes: Object,
-  kpiValues: Object,
-  rawText: String,
-  todayShifts: Object,
-  weeklyShiftsRoster: Object
-}, { timestamps: true });
-
-const Report = mongoose.models.Report || mongoose.model('Report', reportSchema);
-
 // Middleware kết nối DB tự động trước khi xử lý request
 app.use(async (req, res, next) => {
-  await connectDB();
+  await initDB();
   next();
 });
 
@@ -81,33 +79,86 @@ app.post('/api/save-report', async (req, res) => {
     }
 
     const reportId = reportData?.id || `rep-${Date.now()}`;
+    const dateVal = reportData?.date ? new Date(reportData.date) : new Date();
 
-    // Lưu hoặc cập nhật báo cáo trong database (Upsert)
-    const updatedReport = await Report.findOneAndUpdate(
-      { reportId },
-      {
-        reportId,
-        fileName,
-        htmlContent,
-        storeName: reportData?.storeName,
-        leader: reportData?.leader,
-        date: reportData?.date ? new Date(reportData.date) : new Date(),
-        dateStr: reportData?.dateStr,
-        template: reportData?.template,
-        progress: reportData?.progress,
-        rosterShelf: reportData?.rosterShelf,
-        rosterPos: reportData?.rosterPos,
-        openingChecks: reportData?.openingChecks,
-        openingNotes: reportData?.openingNotes,
-        sellingChecks: reportData?.sellingChecks,
-        sellingNotes: reportData?.sellingNotes,
-        kpiValues: reportData?.kpiValues,
-        rawText: reportData?.rawText,
-        todayShifts: reportData?.todayShifts,
-        weeklyShiftsRoster: reportData?.weeklyShiftsRoster
-      },
-      { new: true, upsert: true }
-    );
+    const query = `
+      INSERT INTO reports (
+        report_id, file_name, html_content, store_name, leader, date, date_str, template,
+        progress, roster_shelf, roster_pos, opening_checks, opening_notes, selling_checks,
+        selling_notes, kpi_values, raw_text, today_shifts, weekly_shifts_roster, updated_at
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, $18, $19, NOW()
+      )
+      ON CONFLICT (report_id) DO UPDATE SET
+        file_name = EXCLUDED.file_name,
+        html_content = EXCLUDED.html_content,
+        store_name = EXCLUDED.store_name,
+        leader = EXCLUDED.leader,
+        date = EXCLUDED.date,
+        date_str = EXCLUDED.date_str,
+        template = EXCLUDED.template,
+        progress = EXCLUDED.progress,
+        roster_shelf = EXCLUDED.roster_shelf,
+        roster_pos = EXCLUDED.roster_pos,
+        opening_checks = EXCLUDED.opening_checks,
+        opening_notes = EXCLUDED.opening_notes,
+        selling_checks = EXCLUDED.selling_checks,
+        selling_notes = EXCLUDED.selling_notes,
+        kpi_values = EXCLUDED.kpi_values,
+        raw_text = EXCLUDED.raw_text,
+        today_shifts = EXCLUDED.today_shifts,
+        weekly_shifts_roster = EXCLUDED.weekly_shifts_roster,
+        updated_at = NOW()
+      RETURNING *;
+    `;
+
+    const values = [
+      reportId,
+      fileName,
+      htmlContent,
+      reportData?.storeName || null,
+      reportData?.leader || null,
+      dateVal,
+      reportData?.dateStr || null,
+      reportData?.template || null,
+      reportData?.progress ? JSON.stringify(reportData.progress) : null,
+      reportData?.rosterShelf ? JSON.stringify(reportData.rosterShelf) : null,
+      reportData?.rosterPos ? JSON.stringify(reportData.rosterPos) : null,
+      reportData?.openingChecks ? JSON.stringify(reportData.openingChecks) : null,
+      reportData?.openingNotes ? JSON.stringify(reportData.openingNotes) : null,
+      reportData?.sellingChecks ? JSON.stringify(reportData.sellingChecks) : null,
+      reportData?.sellingNotes ? JSON.stringify(reportData.sellingNotes) : null,
+      reportData?.kpiValues ? JSON.stringify(reportData.kpiValues) : null,
+      reportData?.rawText || null,
+      reportData?.todayShifts ? JSON.stringify(reportData.todayShifts) : null,
+      reportData?.weeklyShiftsRoster ? JSON.stringify(reportData.weeklyShiftsRoster) : null
+    ];
+
+    const result = await pool.query(query, values);
+    const r = result.rows[0];
+
+    const formattedReport = {
+      id: r.report_id,
+      storeName: r.store_name,
+      leader: r.leader,
+      date: r.date,
+      dateStr: r.date_str,
+      template: r.template,
+      progress: r.progress,
+      rosterShelf: r.roster_shelf,
+      rosterPos: r.roster_pos,
+      openingChecks: r.opening_checks,
+      openingNotes: r.opening_notes,
+      sellingChecks: r.selling_checks,
+      sellingNotes: r.selling_notes,
+      kpiValues: r.kpi_values,
+      rawText: r.raw_text,
+      fileName: r.file_name,
+      todayShifts: r.today_shifts,
+      weeklyShiftsRoster: r.weekly_shifts_roster
+    };
 
     // Lưu file HTML cục bộ và đẩy lên GitHub nếu chạy ở local
     if (!process.env.VERCEL) {
@@ -135,7 +186,7 @@ app.post('/api/save-report', async (req, res) => {
       }
     }
 
-    res.status(200).json({ success: true, path: `/reports/${reportId}`, data: updatedReport });
+    res.status(200).json({ success: true, path: `/reports/${reportId}`, data: formattedReport });
   } catch (error) {
     console.error("Lỗi trong API /api/save-report:", error);
     res.status(500).json({ success: false, error: error.message });
@@ -169,26 +220,26 @@ app.post('/api/git-push', async (req, res) => {
 // API: Lấy danh sách toàn bộ báo cáo
 app.get('/api/reports', async (req, res) => {
   try {
-    const reports = await Report.find().sort({ date: -1 });
-    const formattedReports = reports.map(r => ({
-      id: r.reportId,
-      storeName: r.storeName,
+    const result = await pool.query('SELECT * FROM reports ORDER BY date DESC');
+    const formattedReports = result.rows.map(r => ({
+      id: r.report_id,
+      storeName: r.store_name,
       leader: r.leader,
       date: r.date,
-      dateStr: r.dateStr,
+      dateStr: r.date_str,
       template: r.template,
       progress: r.progress,
-      rosterShelf: r.rosterShelf,
-      rosterPos: r.rosterPos,
-      openingChecks: r.openingChecks,
-      openingNotes: r.openingNotes,
-      sellingChecks: r.sellingChecks,
-      sellingNotes: r.sellingNotes,
-      kpiValues: r.kpiValues,
-      rawText: r.rawText,
-      fileName: r.fileName,
-      todayShifts: r.todayShifts,
-      weeklyShiftsRoster: r.weeklyShiftsRoster
+      rosterShelf: r.roster_shelf,
+      rosterPos: r.roster_pos,
+      openingChecks: r.opening_checks,
+      openingNotes: r.opening_notes,
+      sellingChecks: r.selling_checks,
+      sellingNotes: r.selling_notes,
+      kpiValues: r.kpi_values,
+      rawText: r.raw_text,
+      fileName: r.file_name,
+      todayShifts: r.today_shifts,
+      weeklyShiftsRoster: r.weekly_shifts_roster
     }));
     res.status(200).json(formattedReports);
   } catch (error) {
@@ -201,8 +252,8 @@ app.get('/api/reports', async (req, res) => {
 app.delete('/api/reports/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await Report.findOneAndDelete({ reportId: id });
-    if (!result) {
+    const result = await pool.query('DELETE FROM reports WHERE report_id = $1 RETURNING *', [id]);
+    if (result.rowCount === 0) {
       return res.status(404).json({ success: false, error: 'Không tìm thấy báo cáo' });
     }
     res.status(200).json({ success: true });
@@ -216,13 +267,13 @@ app.delete('/api/reports/:id', async (req, res) => {
 app.get('/reports/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const report = await Report.findOne({ reportId: id });
-    if (!report) {
+    const result = await pool.query('SELECT html_content FROM reports WHERE report_id = $1', [id]);
+    if (result.rowCount === 0) {
       return res.status(404).send('<h1>Báo cáo không tồn tại / Report not found</h1>');
     }
     // Trả về HTML trực tiếp (SSR) để trình duyệt hiển thị luôn
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.status(200).send(report.htmlContent);
+    res.status(200).send(result.rows[0].html_content);
   } catch (error) {
     console.error("Lỗi trong SSR route /reports/:id:", error);
     res.status(500).send(`<h1>Lỗi máy chủ / Server Error</h1><p>${error.message}</p>`);
@@ -231,7 +282,7 @@ app.get('/reports/:id', async (req, res) => {
 
 // API kiểm tra trạng thái hoạt động của backend
 app.get('/api/check', (req, res) => {
-  res.json({ status: 'ok', database: isConnected ? 'connected' : 'disconnected' });
+  res.json({ status: 'ok', database: isTableCreated ? 'connected' : 'disconnected' });
 });
 
 // Khởi chạy cục bộ khi chạy trực tiếp file này (không chạy trên Vercel Serverless)
