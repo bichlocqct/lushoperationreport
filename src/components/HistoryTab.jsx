@@ -483,87 +483,119 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                 {/* Expanded Report Content */}
                 {isExpanded && (
                   <div className="p-4 bg-bg-inset border-t-2 border-black space-y-4 animate-fadeIn">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-2.5 border border-border-medium">
-                      {/* Format toggle tabs */}
-                      <div className="flex gap-1.5">
-                        <button
-                          onClick={() => setPreviewFormat('text')}
-                          className={`px-3 py-1 text-[10px] font-bold font-sans uppercase tracking-wider border transition-all ${
-                            previewFormat === 'text' 
-                              ? 'bg-black text-white border-black' 
-                              : 'bg-white text-black border-border-medium hover:border-black'
-                          }`}
-                        >
-                          Bản Zalo/Telegram
-                        </button>
-                        <button
-                          onClick={() => setPreviewFormat('web')}
-                          className={`px-3 py-1 text-[10px] font-bold font-sans uppercase tracking-wider border transition-all ${
-                            previewFormat === 'web' 
-                              ? 'bg-black text-white border-black' 
-                              : 'bg-white text-black border-border-medium hover:border-black'
-                          }`}
-                        >
-                          Giao diện Web
-                        </button>
-                      </div>
+                    <div style={{ 
+                      display: 'flex', 
+                      flexDirection: 'row', 
+                      alignItems: 'center', 
+                      justifyContent: 'space-between', 
+                      gap: '12px', 
+                      backgroundColor: '#ffffff', 
+                      padding: '12px 16px', 
+                      border: '1px solid var(--border-medium)',
+                      flexWrap: 'wrap'
+                    }}>
+                      {/* Left: Section Label */}
+                      <span style={{ 
+                        fontSize: '10px', 
+                        fontWeight: '800', 
+                        fontFamily: 'var(--font-display)', 
+                        textTransform: 'uppercase', 
+                        letterSpacing: '0.05em', 
+                        color: 'var(--text-dark)' 
+                      }}>
+                        Bản Xem Trước Web (Preview)
+                      </span>
 
-                      {/* Action buttons */}
-                      <div className="flex gap-2">
-                        {previewFormat === 'text' ? (
-                          <button
-                            onClick={() => handleCopyText(report.id, report.rawText)}
-                            className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
-                          >
-                            {isCopied ? <Check size={12} className="text-black" /> : <Copy size={12} />}
-                            {isCopied ? 'Đã copy!' : 'Sao chép Text'}
-                          </button>
-                        ) : (
-                          <div className="flex gap-3">
-                            <a
-                              href={`https://lushoperationsreport.vercel.app/reports/${report.id}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
-                            >
-                              <Globe size={12} />
-                              Mở Link SSR
-                            </a>
-                            <button
-                              onClick={() => handleDownloadHTML(report)}
-                              className="flex items-center gap-1.5 text-[10px] text-black font-display font-bold hover:underline uppercase tracking-wider bg-transparent border-none cursor-pointer"
-                            >
-                              <Globe size={12} />
-                              Tải HTML (Web)
-                            </button>
-                          </div>
-                        )}
+                      {/* Right: Actions */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                        <button
+                          onClick={() => handleCopyText(report.id, report.rawText)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            fontFamily: 'var(--font-display)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: isCopied ? '#10b981' : 'var(--text-muted)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 0',
+                            transition: 'color 0.2s ease'
+                          }}
+                        >
+                          {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                          {isCopied ? 'Đã copy!' : 'Sao chép Zalo/Telegram'}
+                        </button>
+
+                        <a
+                          href={`https://lushoperationsreport.vercel.app/reports/${report.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            fontFamily: 'var(--font-display)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: 'var(--text-muted)',
+                            textDecoration: 'none',
+                            padding: '4px 0',
+                            transition: 'color 0.2s ease'
+                          }}
+                        >
+                          <Globe size={12} />
+                          Mở Link SSR
+                        </a>
+
+                        <button
+                          onClick={() => handleDownloadHTML(report)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '10px',
+                            fontWeight: '700',
+                            fontFamily: 'var(--font-display)',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            color: 'var(--text-muted)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '4px 0',
+                            transition: 'color 0.2s ease'
+                          }}
+                        >
+                          <Globe size={12} />
+                          Tải HTML (Web)
+                        </button>
                       </div>
                     </div>
 
-                    {previewFormat === 'text' ? (
-                      <pre className="bg-white p-4 border border-border-medium rounded-none font-mono text-[10px] leading-relaxed text-black whitespace-pre-wrap select-all" style={{ maxHeight: '35vh', overflowY: 'auto' }}>
-                        {report.rawText}
-                      </pre>
-                    ) : (
-                      <div className="bg-white border border-border-medium rounded-none" style={{ height: '55vh', overflowY: 'auto' }}>
-                        <FormPreview 
-                          storeName={report.storeName}
-                          dateStr={report.dateStr}
-                          leader={report.leader}
-                          rosterShelf={report.rosterShelf}
-                          rosterPos={report.rosterPos}
-                          openingChecks={report.openingChecks}
-                          openingNotes={report.openingNotes}
-                          sellingChecks={report.sellingChecks}
-                          sellingNotes={report.sellingNotes}
-                          kpiValues={report.kpiValues}
-                          reportTemplate={report.template || 'standard'}
-                          todayShifts={report.todayShifts}
-                          weeklyShiftsRoster={report.weeklyShiftsRoster}
-                        />
-                      </div>
-                    )}
+                    <div className="bg-white border border-border-medium rounded-none" style={{ height: '55vh', overflowY: 'auto' }}>
+                      <FormPreview 
+                        storeName={report.storeName}
+                        dateStr={report.dateStr}
+                        leader={report.leader}
+                        rosterShelf={report.rosterShelf}
+                        rosterPos={report.rosterPos}
+                        openingChecks={report.openingChecks}
+                        openingNotes={report.openingNotes}
+                        sellingChecks={report.sellingChecks}
+                        sellingNotes={report.sellingNotes}
+                        kpiValues={report.kpiValues}
+                        reportTemplate={report.template || 'standard'}
+                        todayShifts={report.todayShifts}
+                        weeklyShiftsRoster={report.weeklyShiftsRoster}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
