@@ -257,7 +257,8 @@ export default function ShiftsTab({
                               value={name}
                               onChange={(e) => handleShiftNameChange('morning', day.key, idx, e.target.value, nameArray)}
                               placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[10px] h-[26px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              className="table-input text-center font-semibold text-[10px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              style={{ height: '26px' }}
                             />
                             {nameArray.length > 1 && (
                               <button
@@ -307,7 +308,8 @@ export default function ShiftsTab({
                               value={name}
                               onChange={(e) => handleShiftNameChange('middle', day.key, idx, e.target.value, nameArray)}
                               placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[10px] h-[26px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              className="table-input text-center font-semibold text-[10px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              style={{ height: '26px' }}
                             />
                             {nameArray.length > 1 && (
                               <button
@@ -357,7 +359,8 @@ export default function ShiftsTab({
                               value={name}
                               onChange={(e) => handleShiftNameChange('afternoon', day.key, idx, e.target.value, nameArray)}
                               placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[10px] h-[26px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              className="table-input text-center font-semibold text-[10px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
+                              style={{ height: '26px' }}
                             />
                             {nameArray.length > 1 && (
                               <button

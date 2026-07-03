@@ -682,8 +682,8 @@ export default function ReportModal({
     <div className="modal-overlay">
       <div className="modal-content animate-scaleUp" style={{ maxWidth: '850px', width: '95%' }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-medium bg-white text-black">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between p-4 border-b border-medium bg-white text-black" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderBottom: '1px solid var(--border-medium)', backgroundColor: '#ffffff', color: '#000000' }}>
+          <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FileText size={16} />
             <h3 className="text-xs font-sans font-bold uppercase tracking-wider">Khởi Tạo Báo Cáo Ca Trực</h3>
           </div>
@@ -696,7 +696,7 @@ export default function ReportModal({
         </div>
 
         {/* Body Preview */}
-        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset max-h-[65vh]">
+        <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-bg-inset max-h-[65vh]" style={{ flex: '1 1 0%', padding: '16px', overflowY: 'auto', backgroundColor: 'var(--bg-inset)', maxHeight: '60vh' }}>
           <div className="rounded-none">
             <FormPreview 
               storeName={storeName}
@@ -722,11 +722,11 @@ export default function ReportModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white">
+        <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid var(--border-medium)', gap: '12px', backgroundColor: '#ffffff' }}>
           <span className="text-[10px] text-text-muted font-sans uppercase tracking-wider">
             * Có thể mở bản HTML đã tải hoặc bản trên Git để In / xuất PDF
           </span>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex gap-2 w-full sm:w-auto" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
               onClick={handleCopy}
               className="btn-white text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
