@@ -56,6 +56,11 @@ async function initDB() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    // Add columns dynamically for operations grading & comments
+    await pool.query(`
+      ALTER TABLE reports ADD COLUMN IF NOT EXISTS grading_items JSONB;
+      ALTER TABLE reports ADD COLUMN IF NOT EXISTS overall_comments TEXT;
+    `);
     isTableCreated = true;
     console.log("Đã kết nối thành công với PostgreSQL và khởi tạo bảng reports");
   } catch (err) {
@@ -85,11 +90,13 @@ app.post('/api/save-report', async (req, res) => {
       INSERT INTO reports (
         report_id, file_name, html_content, store_name, leader, date, date_str, template,
         progress, roster_shelf, roster_pos, opening_checks, opening_notes, selling_checks,
-        selling_notes, kpi_values, raw_text, today_shifts, weekly_shifts_roster, updated_at
+        selling_notes, kpi_values, raw_text, today_shifts, weekly_shifts_roster,
+        grading_items, overall_comments, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8,
         $9, $10, $11, $12, $13, $14,
-        $15, $16, $17, $18, $19, NOW()
+        $15, $16, $17, $18, $19,
+        $20, $21, NOW()
       )
       ON CONFLICT (report_id) DO UPDATE SET
         file_name = EXCLUDED.file_name,
@@ -110,6 +117,8 @@ app.post('/api/save-report', async (req, res) => {
         raw_text = EXCLUDED.raw_text,
         today_shifts = EXCLUDED.today_shifts,
         weekly_shifts_roster = EXCLUDED.weekly_shifts_roster,
+        grading_items = EXCLUDED.grading_items,
+        overall_comments = EXCLUDED.overall_comments,
         updated_at = NOW()
       RETURNING *;
     `;
@@ -133,7 +142,9 @@ app.post('/api/save-report', async (req, res) => {
       reportData?.kpiValues ? JSON.stringify(reportData.kpiValues) : null,
       reportData?.rawText || null,
       reportData?.todayShifts ? JSON.stringify(reportData.todayShifts) : null,
-      reportData?.weeklyShiftsRoster ? JSON.stringify(reportData.weeklyShiftsRoster) : null
+      reportData?.weeklyShiftsRoster ? JSON.stringify(reportData.weeklyShiftsRoster) : null,
+      reportData?.gradingScores ? JSON.stringify(reportData.gradingScores) : null,
+      reportData?.overallComments || null
     ];
 
     const result = await pool.query(query, values);
@@ -154,6 +165,8 @@ app.post('/api/save-report', async (req, res) => {
       sellingChecks: r.selling_checks,
       sellingNotes: r.selling_notes,
       kpiValues: r.kpi_values,
+      gradingScores: r.grading_items,
+      overallComments: r.overall_comments,
       rawText: r.raw_text,
       fileName: r.file_name,
       todayShifts: r.today_shifts,
@@ -236,6 +249,8 @@ app.get('/api/reports', async (req, res) => {
       sellingChecks: r.selling_checks,
       sellingNotes: r.selling_notes,
       kpiValues: r.kpi_values,
+      gradingScores: r.grading_items,
+      overallComments: r.overall_comments,
       rawText: r.raw_text,
       fileName: r.file_name,
       todayShifts: r.today_shifts,

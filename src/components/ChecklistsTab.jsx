@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Check, ClipboardList, Clock, RefreshCw, AlertCircle, Coins, Target } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE, KPI_TEMPLATES } from '../data/initialData';
+import { OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE, KPI_TEMPLATES, GRADING_CATEGORIES } from '../data/initialData';
 
 export default function ChecklistsTab({ 
   openingChecks = {}, 
@@ -13,7 +13,11 @@ export default function ChecklistsTab({
   sellingNotes = {}, 
   setSellingNotes,
   kpiValues = {},
-  setKpiValues
+  setKpiValues,
+  gradingScores = {},
+  setGradingScores,
+  overallComments = '',
+  setOverallComments
 }) {
   const [activeSubTab, setActiveSubTab] = useState('opening'); // 'opening' | 'selling' | 'kpis'
 
@@ -109,7 +113,24 @@ export default function ChecklistsTab({
     }
   };
 
+  const resetGrading = () => {
+    if (window.confirm('Đặt lại toàn bộ điểm và nhận xét?')) {
+      setGradingScores({});
+      setOverallComments('');
+    }
+  };
 
+  // Compute Overall Grading Score
+  let gradedCount = 0;
+  let totalGradedScore = 0;
+  GRADING_CATEGORIES.forEach(cat => {
+    const scoreVal = gradingScores[cat.key]?.score;
+    if (scoreVal !== undefined && scoreVal !== null && scoreVal !== '') {
+      totalGradedScore += parseFloat(scoreVal);
+      gradedCount++;
+    }
+  });
+  const overallGradingScore = gradedCount > 0 ? (totalGradedScore / gradedCount).toFixed(1) : null;
 
   return (
     <div className="space-y-6">
@@ -139,12 +160,19 @@ export default function ChecklistsTab({
           >
             KPI Tracking (17H00)
           </button>
+          <button
+            onClick={() => setActiveSubTab('grading')}
+            className={`subtab-btn ${activeSubTab === 'grading' ? 'active' : ''}`}
+          >
+            Chấm Điểm Vận Hành & Nhận Xét
+          </button>
         </div>
 
         <button 
           onClick={
             activeSubTab === 'opening' ? resetOpening : 
-            activeSubTab === 'selling' ? resetSelling : resetKpis
+            activeSubTab === 'selling' ? resetSelling : 
+            activeSubTab === 'kpis' ? resetKpis : resetGrading
           }
           className="flex items-center gap-1.5 text-xs text-text-muted hover:text-emerald-600 font-display font-bold uppercase tracking-wider transition-colors"
         >
@@ -402,6 +430,220 @@ export default function ChecklistsTab({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Operations Grading & Comments Tab */}
+      {activeSubTab === 'grading' && (
+        <div className="space-y-6">
+          <div className="bento-card flex flex-col md:flex-row md:items-center justify-between gap-6" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border-medium)' }}>
+            <div>
+              <h3 className="text-md font-display font-bold uppercase tracking-wider mb-1" style={{ margin: 0, fontSize: '15px' }}>Bảng Chấm Điểm & Nhận Xét Vận Hành</h3>
+              <p className="text-xs text-text-muted" style={{ margin: '4px 0 0 0', fontSize: '11px' }}>
+                Đánh giá các khía cạnh vận hành của cửa hàng theo thang điểm từ 1 đến 10 và nhập nhận xét chung.
+              </p>
+            </div>
+            {overallGradingScore !== null && (
+              <div className="flex items-center gap-4 bg-slate-50 border border-medium p-3 rounded-xl" style={{ display: 'flex', alignItems: 'center', gap: '16px', backgroundColor: '#f8fafc', border: '1px solid var(--border-medium)', padding: '12px 16px', borderRadius: '12px' }}>
+                <div className="flex flex-col items-center" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span className="text-[10px] text-text-muted font-bold uppercase tracking-wider" style={{ fontSize: '9px' }}>Điểm trung bình</span>
+                  <span className="text-2xl font-black font-mono" style={{ fontSize: '24px', fontWeight: 900 }}>{overallGradingScore} <span className="text-xs font-normal text-text-muted" style={{ fontSize: '12px' }}>/10</span></span>
+                </div>
+                <div className="h-8 w-px bg-medium" style={{ height: '32px', width: '1px', backgroundColor: 'var(--border-medium)' }}></div>
+                <div>
+                  <span className={`text-[10px] px-2.5 py-1 rounded-md font-bold block w-fit`} style={{
+                    fontSize: '10px',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontWeight: 'bold',
+                    display: 'block',
+                    width: 'fit-content',
+                    border: '1px solid transparent',
+                    ...(parseFloat(overallGradingScore) >= 9.0 ? { backgroundColor: '#ecfdf5', color: '#047857', borderColor: '#d1fae5' } :
+                       parseFloat(overallGradingScore) >= 7.0 ? { backgroundColor: '#eff6ff', color: '#1d4ed8', borderColor: '#dbeafe' } :
+                       parseFloat(overallGradingScore) >= 5.0 ? { backgroundColor: '#fffbeb', color: '#b45309', borderColor: '#fef3c7' } :
+                       { backgroundColor: '#fff1f2', color: '#be123c', borderColor: '#ffe4e6' })
+                  }}>
+                    {parseFloat(overallGradingScore) >= 9.0 ? 'XUẤT SẮC (EXCELLENT)' :
+                     parseFloat(overallGradingScore) >= 7.0 ? 'KHÁ TỐT (GOOD)' :
+                     parseFloat(overallGradingScore) >= 5.0 ? 'TRUNG BÌNH (AVERAGE)' :
+                     'CẦN CẢI THIỆN (IMPROVEMENT)'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {GRADING_CATEGORIES.map(cat => {
+              const currentData = gradingScores[cat.key] || { score: '', note: '' };
+              const score = currentData.score;
+              const note = currentData.note;
+
+              const handleScoreSelect = (val) => {
+                setGradingScores(prev => {
+                  const safePrev = prev || {};
+                  return {
+                    ...safePrev,
+                    [cat.key]: {
+                      ...(safePrev[cat.key] || {}),
+                      score: val
+                    }
+                  };
+                });
+              };
+
+              const handleNoteChange = (val) => {
+                setGradingScores(prev => {
+                  const safePrev = prev || {};
+                  return {
+                    ...safePrev,
+                    [cat.key]: {
+                      ...(safePrev[cat.key] || {}),
+                      note: val
+                    }
+                  };
+                });
+              };
+
+              const getActiveStyle = (val) => {
+                const styles = {
+                  color: '#ffffff',
+                  cursor: 'pointer'
+                };
+                if (val <= 4) return { ...styles, backgroundColor: '#dc2626', borderColor: '#dc2626' };
+                if (val <= 6) return { ...styles, backgroundColor: '#f59e0b', borderColor: '#f59e0b' };
+                if (val <= 8) return { ...styles, backgroundColor: '#2563eb', borderColor: '#2563eb' };
+                return { ...styles, backgroundColor: '#059669', borderColor: '#059669' };
+              };
+
+              const getBadgeText = (val) => {
+                if (!val) return '';
+                if (val <= 4) return 'Cần cải thiện';
+                if (val <= 6) return 'Trung bình';
+                if (val <= 8) return 'Khá tốt';
+                return 'Xuất sắc';
+              };
+
+              const getBadgeStyle = (val) => {
+                if (!val) return {};
+                if (val <= 4) return { color: '#be123c', backgroundColor: '#fff1f2', borderColor: '#ffe4e6' };
+                if (val <= 6) return { color: '#b45309', backgroundColor: '#fffbeb', borderColor: '#fef3c7' };
+                if (val <= 8) return { color: '#1d4ed8', backgroundColor: '#eff6ff', borderColor: '#dbeafe' };
+                return { color: '#047857', backgroundColor: '#ecfdf5', borderColor: '#d1fae5' };
+              };
+
+              return (
+                <div key={cat.key} className="bento-card hover:border-black transition-all" style={{ border: '1px solid var(--border-medium)', padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', backgroundColor: 'var(--bg-card)' }}>
+                  <div className="flex justify-between items-start flex-wrap gap-2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <h4 className="text-sm font-bold text-text-dark flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', margin: 0 }}>
+                        {cat.label}
+                        {score && (
+                          <span className="text-[9px] px-2 py-0.5 rounded-full border font-bold" style={{
+                            fontSize: '9px',
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            fontWeight: 'bold',
+                            ...getBadgeStyle(score)
+                          }}>
+                            {getBadgeText(score)}
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-text-muted mt-0.5" style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>{cat.desc}</p>
+                    </div>
+                    {score && (
+                      <span className="text-lg font-black font-mono text-text-dark" style={{ fontSize: '16px', fontWeight: 900 }}>
+                        {score} <span className="text-xs font-normal text-text-muted" style={{ fontSize: '11px' }}>/10</span>
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 1-10 Slider / Segment Buttons */}
+                  <div className="flex flex-wrap gap-1 md:gap-2" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => {
+                      const isSelected = score === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => handleScoreSelect(val)}
+                          className={`w-9 h-9 text-xs font-bold font-mono rounded-lg border transition-all flex items-center justify-center cursor-pointer`}
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            borderRadius: '8px',
+                            borderWidth: '1px',
+                            borderStyle: 'solid',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'all 0.2s ease',
+                            cursor: 'pointer',
+                            ...(isSelected 
+                              ? getActiveStyle(val) 
+                              : { backgroundColor: '#ffffff', color: 'var(--text-dark)', borderColor: 'var(--border-medium)' }
+                            )
+                          }}
+                        >
+                          {val}
+                        </button>
+                      );
+                    })}
+                    {score && (
+                      <button
+                        type="button"
+                        onClick={() => handleScoreSelect('')}
+                        className="text-[10px] text-rose-500 hover:text-rose-700 font-bold uppercase tracking-wider px-2 cursor-pointer bg-transparent border-none"
+                        style={{ fontSize: '10px', color: '#f43f5e', fontWeight: 'bold', letterSpacing: '0.05em', textTransform: 'uppercase', paddingLeft: '8px', cursor: 'pointer' }}
+                      >
+                        Xóa điểm
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Note Input */}
+                  <div className="flex gap-2 items-center" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="text-xs text-text-muted font-bold min-w-[90px]" style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-muted)', minWidth: '90px' }}>Ghi chú/Góp ý:</span>
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={(e) => handleNoteChange(e.target.value)}
+                      placeholder="Nhập ghi chú chi tiết cho phần này (nếu có)..."
+                      className="table-input flex-1"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Overall Comments Textarea */}
+          <div className="bento-card border-2 border-black p-5 space-y-3" style={{ border: '2px solid #000000', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px', backgroundColor: 'var(--bg-card)' }}>
+            <h4 className="text-sm font-bold uppercase tracking-wider text-text-dark" style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>✍️ Nhận xét chung của Ca trưởng (Overall Comments)</h4>
+            <p className="text-xs text-text-muted" style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>Ghi nhận tổng quát về ca làm việc, các điểm nhấn hoặc các vấn đề cần lưu ý đặc biệt cho ca sau.</p>
+            <textarea
+              value={overallComments}
+              onChange={(e) => setOverallComments(e.target.value)}
+              placeholder="Nhập đánh giá, nhận xét chung về nhân sự, doanh số, dịch vụ khách hàng hoặc sự cố phát sinh..."
+              className="w-full min-h-[120px] p-3 text-xs border border-medium focus:border-black rounded-none outline-none font-sans resize-y"
+              style={{
+                width: '100%',
+                minHeight: '120px',
+                padding: '12px',
+                fontSize: '12px',
+                border: '1px solid var(--border-medium)',
+                outline: 'none',
+                lineHeight: '1.5',
+                resize: 'vertical'
+              }}
+            />
           </div>
         </div>
       )}

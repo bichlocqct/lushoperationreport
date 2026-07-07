@@ -338,3 +338,14 @@ export const KPI_TEMPLATES = [
   { key: 'samplingQty', label: 'Sampling qty', unit: 'phần', format: 'number' },
   { key: 'repeatCustomer', label: 'Repeat customer', unit: 'khách hàng', format: 'number' }
 ];
+
+export const GRADING_CATEGORIES = [
+  { key: 'grooming', label: 'Diện mạo & Tác phong (Grooming)', desc: 'Đồng phục, trang điểm, tóc tai, bảng tên nhân viên đúng chuẩn.' },
+  { key: 'cleanliness', label: 'Vệ sinh cửa hàng (Cleanliness)', desc: 'Sàn nhà, quầy kệ cashier, gương soi, bồn demo sạch sẽ, không đọng nước.' },
+  { key: 'vmd', label: 'Trưng bày & VMD (Visual Merchandising)', desc: 'Hàng hóa refill đầy đủ, bảng giá POP đúng chỗ, layout đúng guideline.' },
+  { key: 'service', label: 'Dịch vụ & Trải nghiệm (Customer Experience)', desc: 'Chủ động chào đón khách, nhiệt tình làm demo/sampling, upselling/link-selling.' },
+  { key: 'inventory', label: 'Quản lý hàng hóa & FIFO (Stock)', desc: 'Sắp xếp hàng hóa theo FIFO, xử lý hàng cận date/last chance.' },
+  { key: 'cashier', label: 'Vận hành Quầy thu ngân (Cashier & POS)', desc: 'Chuẩn bị đủ quỹ reserve, hóa đơn giấy, QR payment hoạt động.' },
+  { key: 'equipment', label: 'Thiết bị & Kỹ thuật (Technical)', desc: 'Hệ thống điện, camera, tivi, âm thanh hoạt động tốt, volume nhạc vừa đủ.' }
+];
+

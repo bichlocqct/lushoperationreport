@@ -17,7 +17,9 @@ const FormPreview = ({
   kpiValues,
   reportTemplate,
   todayShifts,
-  weeklyShiftsRoster
+  weeklyShiftsRoster,
+  gradingScores = {},
+  overallComments = ''
 }) => {
   // Calculate counts for history item
   const totalOpening = OPENING_CHECKLIST_TEMPLATE.length;
@@ -340,6 +342,93 @@ const FormPreview = ({
           </tbody>
         </table>
       </div>
+
+      {/* V. Operations Grading & Comments */}
+      {gradingScores && Object.keys(gradingScores).length > 0 && (
+        <div style={{ marginTop: '25px', pageBreakInside: 'avoid' }}>
+          <div style={{ backgroundColor: '#000000', color: '#ffffff', padding: '5px 10px', fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '10px', letterSpacing: '0.05em' }}>
+            V. Đánh Giá Vận Hành & Nhận Xét Chung / Operations Grading & Comments
+          </div>
+
+          <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '15px' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#f4f4f5' }}>
+                <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', textAlign: 'left' }}>Hạng Mục Đánh Giá / Category</th>
+                <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', width: '25%', textAlign: 'center' }}>Điểm Số / Score</th>
+                <th style={{ border: '1px solid #000000', padding: '6px 8px', fontSize: '8.5px', fontWeight: 'bold', width: '45%', textAlign: 'left' }}>Chi Tiết / Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => {
+                const GRADING_CATEGORIES_LOCAL = [
+                  { key: 'grooming', label: 'Diện mạo & Tác phong (Grooming)' },
+                  { key: 'cleanliness', label: 'Vệ sinh cửa hàng (Cleanliness)' },
+                  { key: 'vmd', label: 'Trưng bày & VMD (VMD)' },
+                  { key: 'service', label: 'Dịch vụ & Trải nghiệm (Experience)' },
+                  { key: 'inventory', label: 'Quản lý hàng hóa & FIFO (Stock)' },
+                  { key: 'cashier', label: 'Vận hành Quầy thu ngân (Cashier)' },
+                  { key: 'equipment', label: 'Thiết bị & Kỹ thuật (Technical)' }
+                ];
+
+                let gradedCount = 0;
+                let totalGradedScore = 0;
+
+                const rows = GRADING_CATEGORIES_LOCAL.map(cat => {
+                  const data = gradingScores[cat.key] || { score: '', note: '' };
+                  if (data.score !== undefined && data.score !== null && data.score !== '') {
+                    totalGradedScore += parseFloat(data.score);
+                    gradedCount++;
+                  }
+                  
+                  return (
+                    <tr key={cat.key} style={{ borderBottom: '1px solid #000000' }}>
+                      <td style={{ border: '1px solid #000000', padding: '5px 8px', fontSize: '9px', fontWeight: 'bold' }}>{cat.label}</td>
+                      <td style={{ border: '1px solid #000000', padding: '5px 8px', fontSize: '10px', fontWeight: 'bold', textAlign: 'center', fontFamily: 'monospace' }}>
+                        {data.score !== '' ? `${data.score} / 10` : '--'}
+                      </td>
+                      <td style={{ border: '1px solid #000000', padding: '5px 8px', fontSize: '9px', fontStyle: 'italic', color: '#3f3f46' }}>
+                        {data.note || '--'}
+                      </td>
+                    </tr>
+                  );
+                });
+
+                const average = gradedCount > 0 ? (totalGradedScore / gradedCount).toFixed(1) : '--';
+                let ratingLabel = 'N/A';
+                if (average !== '--') {
+                  const avg = parseFloat(average);
+                  if (avg >= 9.0) ratingLabel = 'XUẤT SẮC (EXCELLENT)';
+                  else if (avg >= 7.0) ratingLabel = 'KHÁ TỐT (GOOD)';
+                  else if (avg >= 5.0) ratingLabel = 'TRUNG BÌNH (AVERAGE)';
+                  else ratingLabel = 'CẦN CẢI THIỆN (IMPROVEMENT)';
+                }
+
+                return (
+                  <>
+                    {rows}
+                    <tr style={{ backgroundColor: '#fafafa', fontWeight: 'bold' }}>
+                      <td style={{ border: '1px solid #000000', padding: '8px 10px', fontSize: '10px', textTransform: 'uppercase' }}>ĐIỂM VẬN HÀNH TRUNG BÌNH</td>
+                      <td style={{ border: '1px solid #000000', padding: '8px 10px', fontSize: '11px', textAlign: 'center', fontFamily: 'monospace', color: '#000000' }}>{average} / 10</td>
+                      <td style={{ border: '1px solid #000000', padding: '8px 10px', fontSize: '9px', textTransform: 'uppercase', color: '#000000' }}>XẾP LOẠI: {ratingLabel}</td>
+                    </tr>
+                  </>
+                );
+              })()}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {overallComments && (
+        <div style={{ marginTop: '15px', border: '1px solid #000000', padding: '12px', backgroundColor: '#f9fafb', pageBreakInside: 'avoid' }}>
+          <div style={{ fontSize: '7.5px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '6px', color: '#52525b', letterSpacing: '0.05em' }}>
+            ✍️ Nhận xét chung của Ca trưởng / Shift Leader's Overall Comments:
+          </div>
+          <div style={{ fontSize: '10px', fontStyle: 'italic', whiteSpace: 'pre-wrap', lineHeight: '1.5', color: '#0f172a' }}>
+            "{overallComments}"
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -595,6 +684,8 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
                         reportTemplate={report.template || 'standard'}
                         todayShifts={report.todayShifts}
                         weeklyShiftsRoster={report.weeklyShiftsRoster}
+                        gradingScores={report.gradingScores}
+                        overallComments={report.overallComments}
                       />
                     </div>
                   </div>

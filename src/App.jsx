@@ -71,6 +71,8 @@ export default function App() {
     sellingChecks: {},
     sellingNotes: {},
     kpiValues: {},
+    gradingScores: {},
+    overallComments: '',
     rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
     rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
   };
@@ -81,6 +83,8 @@ export default function App() {
   const sellingChecks = activeStoreData.sellingChecks || {};
   const sellingNotes = activeStoreData.sellingNotes || {};
   const kpiValues = activeStoreData.kpiValues || {};
+  const gradingScores = activeStoreData.gradingScores || {};
+  const overallComments = activeStoreData.overallComments || '';
   const rosterShelf = activeStoreData.rosterShelf || SHELF_DIVISION.map(item => ({ ...item, staff: '' }));
   const rosterPos = activeStoreData.rosterPos || POSITION_DIVISION.map(item => ({ ...item, staff: '' }));
 
@@ -94,6 +98,8 @@ export default function App() {
         sellingChecks: {},
         sellingNotes: {},
         kpiValues: {},
+        gradingScores: {},
+        overallComments: '',
         rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
         rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
       };
@@ -116,6 +122,8 @@ export default function App() {
   const setSellingChecks = (val) => updateActiveStoreData('sellingChecks', val);
   const setSellingNotes = (val) => updateActiveStoreData('sellingNotes', val);
   const setKpiValues = (val) => updateActiveStoreData('kpiValues', val);
+  const setGradingScores = (val) => updateActiveStoreData('gradingScores', val);
+  const setOverallComments = (val) => updateActiveStoreData('overallComments', val);
   const setRosterShelf = (val) => updateActiveStoreData('rosterShelf', val);
   const setRosterPos = (val) => updateActiveStoreData('rosterPos', val);
   
@@ -227,6 +235,8 @@ export default function App() {
           sellingChecks: {},
           sellingNotes: {},
           kpiValues: {},
+          gradingScores: {},
+          overallComments: '',
           rosterShelf: SHELF_DIVISION.map(item => ({ ...item, staff: '' })),
           rosterPos: POSITION_DIVISION.map(item => ({ ...item, staff: '' }))
         }
@@ -482,6 +492,10 @@ export default function App() {
               setSellingNotes={setSellingNotes}
               kpiValues={kpiValues}
               setKpiValues={setKpiValues}
+              gradingScores={gradingScores}
+              setGradingScores={setGradingScores}
+              overallComments={overallComments}
+              setOverallComments={setOverallComments}
             />
           )}
 
@@ -508,6 +522,8 @@ export default function App() {
         sellingChecks={sellingChecks}
         sellingNotes={sellingNotes}
         kpiValues={kpiValues}
+        gradingScores={gradingScores}
+        overallComments={overallComments}
         weeklyShifts={weeklyShifts}
         onSaveReport={handleSaveReport}
       />

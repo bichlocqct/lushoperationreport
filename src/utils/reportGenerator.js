@@ -20,6 +20,8 @@ export function generateReportHTML(reportData, template = 'standard') {
     sellingChecks = {},
     sellingNotes = {},
     kpiValues = {},
+    gradingScores = {},
+    overallComments = '',
     todayShifts,
     weeklyShiftsRoster,
     fileName
@@ -256,6 +258,84 @@ export function generateReportHTML(reportData, template = 'standard') {
   const kpiCount = template === 'standard' ? 'IV' : 'III';
   const posCount = todayShifts ? '2' : '1';
   const shelfCount = todayShifts ? '3' : '2';
+
+  // 7. Operations Grading & Comments HTML
+  let gradingSectionHTML = '';
+  if (gradingScores && Object.keys(gradingScores).length > 0) {
+    const GRADING_CATEGORIES_LOCAL = [
+      { key: 'grooming', label: 'Diện mạo & Tác phong (Grooming)' },
+      { key: 'cleanliness', label: 'Vệ sinh cửa hàng (Cleanliness)' },
+      { key: 'vmd', label: 'Trưng bày & VMD (VMD)' },
+      { key: 'service', label: 'Dịch vụ & Trải nghiệm (Experience)' },
+      { key: 'inventory', label: 'Quản lý hàng hóa & FIFO (Stock)' },
+      { key: 'cashier', label: 'Vận hành Quầy thu ngân (Cashier)' },
+      { key: 'equipment', label: 'Thiết bị & Kỹ thuật (Technical)' }
+    ];
+
+    let gradedCount = 0;
+    let totalGradedScore = 0;
+
+    const rows = GRADING_CATEGORIES_LOCAL.map(cat => {
+      const data = gradingScores[cat.key] || { score: '', note: '' };
+      if (data.score !== undefined && data.score !== null && data.score !== '') {
+        totalGradedScore += parseFloat(data.score);
+        gradedCount++;
+      }
+      return `
+        <tr style="border-bottom: 1px solid #000000; page-break-inside: avoid;">
+          <td style="border: 1px solid #000000; padding: 6px 10px; font-size: 10px; font-weight: bold; width: 35%;">${cat.label}</td>
+          <td style="border: 1px solid #000000; padding: 6px 10px; font-family: var(--font-mono); font-size: 11px; font-weight: bold; text-align: center; width: 20%;">${data.score !== '' ? `${data.score} / 10` : '--'}</td>
+          <td style="border: 1px solid #000000; padding: 6px 10px; font-size: 10px; font-style: italic; color: #3f3f46; width: 45%;">${data.note || '--'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const average = gradedCount > 0 ? (totalGradedScore / gradedCount).toFixed(1) : '--';
+    let ratingLabel = 'N/A';
+    if (average !== '--') {
+      const avg = parseFloat(average);
+      if (avg >= 9.0) ratingLabel = 'XUẤT SẮC (EXCELLENT)';
+      else if (avg >= 7.0) ratingLabel = 'KHÁ TỐT (GOOD)';
+      else if (avg >= 5.0) ratingLabel = 'TRUNG BÌNH (AVERAGE)';
+      else ratingLabel = 'CẦN CẢI THIỆN (IMPROVEMENT)';
+    }
+
+    const nextSecNum = template === 'standard' ? 'V' : 'IV';
+
+    gradingSectionHTML = `
+      <div class="section-block" style="margin-top: 25px; page-break-inside: avoid;">
+        <div class="form-section-header">${nextSecNum}. Đánh Giá Vận Hành & Nhận Xét Chung / Operations Grading & Comments</div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+          <thead>
+            <tr style="background-color: #f4f4f5;">
+              <th style="border: 1px solid #000000; text-align: left; padding: 8px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold;">Hạng Mục Đánh Giá / Category</th>
+              <th style="border: 1px solid #000000; text-align: center; padding: 8px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold;">Điểm Số / Score</th>
+              <th style="border: 1px solid #000000; text-align: left; padding: 8px 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold;">Chi Tiết / Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr style="background-color: #fafafa; font-weight: bold;">
+              <td style="border: 1px solid #000000; padding: 8px 10px; font-size: 10px; text-transform: uppercase;">ĐIỂM VẬN HÀNH TRUNG BÌNH</td>
+              <td style="border: 1px solid #000000; padding: 8px 10px; font-family: var(--font-mono); font-size: 11px; text-align: center;">${average} / 10</td>
+              <td style="border: 1px solid #000000; padding: 8px 10px; font-size: 9px; text-transform: uppercase;">XẾP LOẠI: ${ratingLabel}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        ${overallComments ? `
+          <div style="border: 1px solid #000000; padding: 12px; background-color: #f9fafb; margin-top: 15px;">
+            <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; color: #52525b; letter-spacing: 0.05em;">
+              ✍️ Nhận xét chung của Ca trưởng / Shift Leader's Overall Comments:
+            </div>
+            <div style="font-size: 11px; font-style: italic; white-space: pre-wrap; line-height: 1.5; color: #0f172a;">
+              "${overallComments.replace(/"/g, '&quot;')}"
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
 
   return `<!DOCTYPE html>
 <html lang="vi">
@@ -614,6 +694,9 @@ export function generateReportHTML(reportData, template = 'standard') {
         </tbody>
       </table>
     </div>
+
+    <!-- V. Operations Grading & Comments -->
+    ${gradingSectionHTML}
 
     <!-- Footer Signatures -->
     <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; page-break-inside: avoid;">
