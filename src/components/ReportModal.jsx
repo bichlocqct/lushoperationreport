@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Copy, Check, Save, FileText, Globe } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { X, Copy, Check, FileDown, FileText, Globe } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { STORES, KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 import { generateReportHTML } from '../utils/reportGenerator';
@@ -444,6 +444,7 @@ export default function ReportModal({
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
   const [copied, setCopied] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
+  const savedReportRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -706,7 +707,7 @@ export default function ReportModal({
   };
 
   const saveReportToHistoryAndLocal = async (silent = false) => {
-    if (hasSaved) return null;
+    if (hasSaved) return savedReportRef.current;
     setHasSaved(true);
 
     const timeStamp = Date.now();
@@ -765,7 +766,9 @@ export default function ReportModal({
     // 2. Save report to localStorage database (state)
     onSaveReport(reportData);
 
-    return { reportData, htmlContent, fileName };
+    const savedInfo = { reportData, htmlContent, fileName };
+    savedReportRef.current = savedInfo;
+    return savedInfo;
   };
 
   const handleCopy = async () => {
@@ -792,21 +795,49 @@ export default function ReportModal({
     }
   };
 
-  const handleSave = async () => {
-    const result = await saveReportToHistoryAndLocal(false); // Explicit save to history
- 
-    // Confetti celebration (B&W/Gray values or default festive)
-    confetti({
-      particleCount: 120,
-      spread: 60,
-      origin: { y: 0.6 },
-      colors: ['#000000', '#ffffff', '#71717a', '#a1a1aa']
-    });
- 
-    if (result && result.reportData) {
-      window.open(`https://lushoperationsreport.vercel.app/reports/${result.reportData.id}`, '_blank');
+  const handleExportPdf = async () => {
+    // Open the print window immediately so browsers do not block it after the async save.
+    const printWindow = window.open('', '_blank', 'width=1100,height=800');
+    if (!printWindow) {
+      window.alert('Trình duyệt đã chặn cửa sổ in. Hãy cho phép pop-up để xuất PDF.');
+      return;
     }
- 
+
+    printWindow.document.write('<title>Đang chuẩn bị bản PDF...</title><p style="font-family: sans-serif; padding: 24px;">Đang chuẩn bị bản PDF...</p>');
+    printWindow.document.close();
+
+    const result = await saveReportToHistoryAndLocal(false);
+    if (!result?.htmlContent) {
+      printWindow.close();
+      return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(result.htmlContent);
+    printWindow.document.close();
+
+    let hasPrinted = false;
+    const openPrintDialog = () => {
+      if (hasPrinted) return;
+      hasPrinted = true;
+      printWindow.focus();
+      printWindow.print();
+    };
+
+    printWindow.addEventListener('load', () => {
+      window.setTimeout(openPrintDialog, 250);
+    }, { once: true });
+
+    // Fallback for generated documents that do not emit load consistently.
+    window.setTimeout(openPrintDialog, 700);
+
+    confetti({
+      particleCount: 80,
+      spread: 50,
+      origin: { y: 0.6 },
+      colors: ['#202a23', '#ffffff', '#7b9480', '#b6c7b9']
+    });
+
     onClose();
   };
 
@@ -865,7 +896,7 @@ export default function ReportModal({
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid var(--border-medium)', gap: '12px', backgroundColor: '#ffffff' }}>
           <span className="text-[10px] text-text-muted font-sans uppercase tracking-wider">
-            * Có thể mở bản HTML đã tải hoặc bản trên Git để In / xuất PDF
+            * Nhấn Xuất PDF để mở hộp thoại in và lưu báo cáo thành PDF
           </span>
           <div className="flex gap-2 w-full sm:w-auto" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
@@ -885,11 +916,12 @@ export default function ReportModal({
             </button>
 
             <button
-              onClick={handleSave}
+              onClick={handleExportPdf}
               className="btn-black text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
+              title="Mở hộp thoại in để lưu báo cáo dưới dạng PDF"
             >
-              <Save size={14} />
-              Lưu Báo Cáo (Save)
+              <FileDown size={14} />
+              Xuất PDF
             </button>
           </div>
         </div>
