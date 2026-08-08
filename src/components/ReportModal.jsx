@@ -795,7 +795,7 @@ export default function ReportModal({
     }
   };
 
-  const handleExportPdf = async () => {
+  const handleExportReport = async () => {
     // Open the print window immediately so browsers do not block it after the async save.
     const printWindow = window.open('', '_blank', 'width=1100,height=800');
     if (!printWindow) {
@@ -896,7 +896,7 @@ export default function ReportModal({
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid var(--border-medium)', gap: '12px', backgroundColor: '#ffffff' }}>
           <span className="text-[10px] text-text-muted font-sans uppercase tracking-wider">
-            * Nhấn Xuất PDF để mở hộp thoại in và lưu báo cáo thành PDF
+            * Báo cáo sẽ được lưu vào Lịch sử Báo cáo trước khi mở hộp thoại in
           </span>
           <div className="flex gap-2 w-full sm:w-auto" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
@@ -916,12 +916,12 @@ export default function ReportModal({
             </button>
 
             <button
-              onClick={handleExportPdf}
+              onClick={handleExportReport}
               className="btn-black text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
-              title="Mở hộp thoại in để lưu báo cáo dưới dạng PDF"
+              title="Lưu vào Lịch sử Báo cáo và mở hộp thoại in"
             >
               <FileDown size={14} />
-              Xuất PDF
+              Xuất Báo Cáo
             </button>
           </div>
         </div>
