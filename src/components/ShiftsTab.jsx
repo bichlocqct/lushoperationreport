@@ -1,406 +1,392 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, Table, RefreshCw, Calendar } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  ChevronDown,
+  Clock3,
+  Info,
+  MapPin,
+  Plus,
+  RotateCcw,
+  Table2,
+  Trash2,
+  UsersRound
+} from 'lucide-react';
 import { STORES } from '../data/initialData';
 
 const DAYS = [
-  { key: 'monday', label: 'Thứ 2', isWeekend: false },
-  { key: 'tuesday', label: 'Thứ 3', isWeekend: false },
-  { key: 'wednesday', label: 'Thứ 4', isWeekend: false },
-  { key: 'thursday', label: 'Thứ 5', isWeekend: false },
-  { key: 'friday', label: 'Thứ 6', isWeekend: false },
-  { key: 'saturday', label: 'Thứ 7', isWeekend: true },
-  { key: 'sunday', label: 'Chủ Nhật', isWeekend: true }
+  { key: 'monday', label: 'Thứ 2', shortLabel: 'T2', isWeekend: false },
+  { key: 'tuesday', label: 'Thứ 3', shortLabel: 'T3', isWeekend: false },
+  { key: 'wednesday', label: 'Thứ 4', shortLabel: 'T4', isWeekend: false },
+  { key: 'thursday', label: 'Thứ 5', shortLabel: 'T5', isWeekend: false },
+  { key: 'friday', label: 'Thứ 6', shortLabel: 'T6', isWeekend: false },
+  { key: 'saturday', label: 'Thứ 7', shortLabel: 'T7', isWeekend: true },
+  { key: 'sunday', label: 'Chủ Nhật', shortLabel: 'CN', isWeekend: true }
 ];
 
-export default function ShiftsTab({ 
-  selectedStoreId, 
-  setSelectedStoreId, 
-  weeklyShifts = {}, 
-  setWeeklyShifts 
+const SHIFT_ROWS = [
+  { key: 'morning', label: 'Ca sáng', note: 'Chuẩn bị & mở cửa', tone: 'morning', number: '01' },
+  { key: 'middle', label: 'Ca giữa', note: 'Vận hành giữa ngày', tone: 'middle', number: '02' },
+  { key: 'afternoon', label: 'Ca chiều', note: 'Bàn giao & đóng ca', tone: 'afternoon', number: '03' }
+];
+
+const BREAK_RULES = [
+  { title: 'Ca sáng', time: '12h – 12h30', detail: '1 nhân sự ca sáng' },
+  { title: 'Ca giữa', time: '13h30 – 14h', detail: '1 nhân sự ca giữa' },
+  { title: 'Ca chiều', time: '15h – 15h30', detail: '1 nhân sự ca chiều' }
+];
+
+function splitTimeValue(value) {
+  if (!value) return { range: '', duration: '' };
+  const [range, duration] = value.split('(');
+  return {
+    range: range.trim(),
+    duration: duration ? duration.replace(')', '').trim() : ''
+  };
+}
+
+function HandoverChip({ value }) {
+  const { range, duration } = splitTimeValue(value);
+
+  return (
+    <div className="shift-handover-chip">
+      <span>{range}</span>
+      {duration && <small>{duration}</small>}
+    </div>
+  );
+}
+
+function DirectoryTable({ stores, scheduleKey, title }) {
+  return (
+    <div className="shift-directory-block">
+      <div className="shift-directory-label">
+        <span className="shift-directory-dot" />
+        {title}
+      </div>
+      <div className="shift-directory-scroll">
+        <table className="shift-directory-table">
+          <thead>
+            <tr>
+              <th>Cửa hàng</th>
+              <th>Hoạt động</th>
+              <th>Ca sáng</th>
+              <th>Ca giữa</th>
+              <th>Ca chiều</th>
+              <th>Giao ca</th>
+            </tr>
+          </thead>
+          <tbody>
+            {stores.map(store => (
+              <tr key={store.id}>
+                <td>
+                  <div className="shift-directory-store">
+                    <span>{store.name}</span>
+                    <small>{store.region}</small>
+                  </div>
+                </td>
+                <td className="shift-directory-time">{store.hours[scheduleKey]}</td>
+                <td>{store.shifts[scheduleKey].morning}</td>
+                <td>{store.shifts[scheduleKey].middle}</td>
+                <td>{store.shifts[scheduleKey].afternoon}</td>
+                <td><HandoverChip value={store.shifts[scheduleKey].handover} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default function ShiftsTab({
+  selectedStoreId,
+  setSelectedStoreId,
+  weeklyShifts = {},
+  setWeeklyShifts
 }) {
   const selectedStore = STORES.find(store => store.id === selectedStoreId) || STORES[0];
   const [activeRegion, setActiveRegion] = useState(selectedStore.region);
 
-  // Sync active region with selected store on load
   useEffect(() => {
-    if (selectedStore) {
-      setActiveRegion(selectedStore.region);
-    }
-  }, [selectedStoreId]);
+    if (selectedStore) setActiveRegion(selectedStore.region);
+  }, [selectedStore, selectedStoreId]);
 
-  const formatHandoverTime = (timeStr) => {
-    if (!timeStr) return null;
-    if (timeStr.includes('(')) {
-      const parts = timeStr.split('(');
-      const timeRange = parts[0].trim();
-      const duration = parts[1].replace(')', '').trim();
-      return (
-        <div className="flex flex-col items-center justify-center leading-normal">
-          <span className="font-mono font-bold text-[9px] text-slate-800 block whitespace-nowrap">{timeRange}</span>
-          <span className="text-[8px] text-text-muted font-bold block mt-0.5 whitespace-nowrap bg-slate-100 border border-slate-200/60 px-1.5 py-0.5 rounded-full">
-            {duration}
-          </span>
-        </div>
-      );
-    }
-    return <span className="font-mono font-bold text-[9px] text-slate-800 block whitespace-nowrap">{timeStr}</span>;
-  };
+  const filteredStores = useMemo(
+    () => STORES.filter(store => store.region === activeRegion),
+    [activeRegion]
+  );
 
-  const formatLeftHandover = (timeStr) => {
-    if (!timeStr) return null;
-    if (timeStr.includes('(')) {
-      const parts = timeStr.split('(');
-      const timeRange = parts[0].trim();
-      const duration = parts[1].replace(')', '').trim();
-      return (
-        <div className="mt-0.5 leading-tight">
-          <span className="text-[9px] text-text-muted block">Giao ca chuẩn:</span>
-          <span className="text-[10px] text-text-dark font-mono font-bold block mt-0.5 whitespace-nowrap">{timeRange}</span>
-          <span className="text-[9px] text-text-muted font-medium block whitespace-nowrap">({duration})</span>
-        </div>
-      );
-    }
-    return <span className="text-[9px] text-text-dark font-semibold mt-0.5 block">{timeStr}</span>;
-  };
+  const scheduleStats = useMemo(() => {
+    const assigned = SHIFT_ROWS.reduce((total, shift) => {
+      return total + DAYS.reduce((dayTotal, day) => {
+        const value = weeklyShifts[selectedStoreId]?.[shift.key]?.[day.key] || '';
+        return dayTotal + value.split(';;').filter(name => name.trim()).length;
+      }, 0);
+    }, 0);
 
-  const formatDirectoryHandover = (timeStr) => {
-    if (!timeStr) return null;
-    if (timeStr.includes('(')) {
-      const parts = timeStr.split('(');
-      const timeRange = parts[0].trim();
-      const duration = parts[1].replace(')', '').trim();
-      return (
-        <span className="text-xs whitespace-nowrap">
-          <strong className="font-mono text-slate-800">{timeRange}</strong> <span className="text-[10px] text-text-muted">({duration})</span>
-        </span>
-      );
-    }
-    return <span className="text-xs font-mono font-bold text-slate-800">{timeStr}</span>;
-  };
+    return { assigned, shiftCount: SHIFT_ROWS.length, dayCount: DAYS.length };
+  }, [selectedStoreId, weeklyShifts]);
 
   const handleRegionChange = (region) => {
     setActiveRegion(region);
     const regionalStores = STORES.filter(store => store.region === region);
-    if (regionalStores.length > 0) {
-      // Auto-select first store of selected region
-      setSelectedStoreId(regionalStores[0].id);
-    }
-  };
-
-  const handleShiftNameChange = (shiftKey, dayKey, index, value, currentArray) => {
-    const nextArray = [...currentArray];
-    nextArray[index] = value;
-    const joinedValue = nextArray.join(';;');
-    updateShiftState(shiftKey, dayKey, joinedValue);
-  };
-
-  const handleAddNameField = (shiftKey, dayKey, currentArray) => {
-    const nextArray = [...currentArray, ''];
-    const joinedValue = nextArray.join(';;');
-    updateShiftState(shiftKey, dayKey, joinedValue);
-  };
-
-  const handleRemoveNameField = (shiftKey, dayKey, index, currentArray) => {
-    const nextArray = currentArray.filter((_, i) => i !== index);
-    const joinedValue = nextArray.join(';;');
-    updateShiftState(shiftKey, dayKey, joinedValue);
+    if (regionalStores.length > 0) setSelectedStoreId(regionalStores[0].id);
   };
 
   const updateShiftState = (shiftKey, dayKey, value) => {
     setWeeklyShifts(prev => {
       const storeData = prev[selectedStoreId] || {};
       const shiftData = storeData[shiftKey] || {};
+
       return {
         ...prev,
         [selectedStoreId]: {
           ...storeData,
-          [shiftKey]: {
-            ...shiftData,
-            [dayKey]: value
-          }
+          [shiftKey]: { ...shiftData, [dayKey]: value }
         }
       };
     });
   };
 
-  const getShiftValue = (shiftKey, dayKey) => {
-    return weeklyShifts[selectedStoreId]?.[shiftKey]?.[dayKey] || '';
+  const getShiftNames = (shiftKey, dayKey) => {
+    const value = weeklyShifts[selectedStoreId]?.[shiftKey]?.[dayKey] || '';
+    return value ? value.split(';;') : [''];
+  };
+
+  const updateName = (shiftKey, dayKey, index, value, names) => {
+    const nextNames = [...names];
+    nextNames[index] = value;
+    updateShiftState(shiftKey, dayKey, nextNames.join(';;'));
+  };
+
+  const addName = (shiftKey, dayKey, names) => {
+    updateShiftState(shiftKey, dayKey, [...names, ''].join(';;'));
+  };
+
+  const removeName = (shiftKey, dayKey, index, names) => {
+    updateShiftState(
+      shiftKey,
+      dayKey,
+      names.filter((_, nameIndex) => nameIndex !== index).join(';;')
+    );
   };
 
   const handleResetWeeklyShifts = () => {
-    if (window.confirm('Đặt lại toàn bộ bảng phân ca làm việc trong tuần của cửa hàng này?')) {
-      setWeeklyShifts(prev => {
-        const next = { ...prev };
-        delete next[selectedStoreId];
-        return next;
-      });
-    }
+    if (!window.confirm('Đặt lại toàn bộ bảng phân ca của cửa hàng này?')) return;
+
+    setWeeklyShifts(prev => {
+      const next = { ...prev };
+      delete next[selectedStoreId];
+      return next;
+    });
   };
 
-  const filteredStores = STORES.filter(store => store.region === activeRegion);
-
   return (
-    <div className="space-y-6 animate-fadeIn">
-      {/* PDF Styled Section Header Bar */}
-      <div className="pdf-section-header">
-        <span>CA LÀM VIỆC TẠI CỬA HÀNG</span>
-      </div>
-
-      {/* Region Selector (Placed prominently ABOVE the Store Selector) */}
-      <div className="bento-card bg-slate-50/50 space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="space-y-1">
-            <h4 className="text-xs font-display font-bold uppercase tracking-wider text-black">
-              Chọn khu vực & Cửa hàng làm việc
-            </h4>
+    <div className="shifts-page animate-fadeIn">
+      <section className="shift-hero">
+        <div className="shift-hero-copy">
+          <div className="shift-kicker">
+            <span className="shift-kicker-mark" />
+            <span>LUSH / VẬN HÀNH CỬA HÀNG</span>
           </div>
+          <h1>Ca làm việc tại cửa hàng</h1>
+          <p>Phân bổ nhân sự theo từng ca, theo dõi thời gian giao ca và chuẩn hóa vận hành trong tuần.</p>
+        </div>
+        <div className="shift-hero-meta">
+          <div className="shift-hero-meta-icon"><CalendarDays size={18} /></div>
+          <div>
+            <span>Tuần vận hành</span>
+            <strong>Thứ 2 – Chủ Nhật</strong>
+          </div>
+        </div>
+      </section>
 
-          {/* Region Filter Chips */}
-          <div className="subtabs-container">
-            {['HCM', 'HN'].map(reg => {
-              const isActive = activeRegion === reg;
-              return (
+      <section className="shift-control-panel">
+        <div className="shift-control-heading">
+          <div className="shift-section-icon"><Building2 size={18} /></div>
+          <div>
+            <span className="shift-eyebrow">Thiết lập ca trực</span>
+            <h2>Chọn khu vực và cửa hàng</h2>
+            <p>Thông tin lịch làm việc sẽ được cập nhật theo cửa hàng đang chọn.</p>
+          </div>
+        </div>
+
+        <div className="shift-control-fields">
+          <div className="shift-field">
+            <label htmlFor="shift-region">Khu vực</label>
+            <div className="shift-segmented" id="shift-region">
+              {['HCM', 'HN'].map(region => (
                 <button
-                  key={reg}
-                  onClick={() => handleRegionChange(reg)}
-                  className={`subtab-btn ${isActive ? 'active' : ''}`}
+                  key={region}
+                  type="button"
+                  onClick={() => handleRegionChange(region)}
+                  className={activeRegion === region ? 'is-active' : ''}
+                  aria-pressed={activeRegion === region}
                 >
-                  {reg === 'HCM' ? 'Hồ Chí Minh' : 'Hà Nội'}
+                  {region === 'HCM' ? 'Hồ Chí Minh' : 'Hà Nội'}
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Store Selector Dropdown */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2 border-t border-light">
-          <label className="text-xs font-display font-bold uppercase tracking-wider text-text-dark flex items-center gap-1.5">
-            <MapPin size={14} className="text-emerald-600" />
-            Cửa hàng hoạt động:
-          </label>
-          <select
-            value={selectedStoreId}
-            onChange={(e) => setSelectedStoreId(e.target.value)}
-            className="select-box bg-white font-display text-xs font-bold border border-medium cursor-pointer uppercase tracking-wider w-80"
-          >
-            {filteredStores.map(store => (
-              <option key={store.id} value={store.id}>
-                {store.name}
-              </option>
-            ))}
-          </select>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200/60 text-text-muted text-[10px] font-bold tracking-wide uppercase whitespace-nowrap mt-1 sm:mt-0">
-            <Clock size={11} className="text-slate-500" />
-            Thời gian mở cửa: {selectedStore.hours.weekday}
-          </span>
-        </div>
-      </div>
-
-      {/* Interactive Weekly Shift Roster Sheet */}
-      <div className="bento-card space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-light pb-3">
-          <div className="flex items-center gap-2">
-            <Calendar size={18} className="text-emerald-600" />
-            <div>
-              <h3 className="text-sm font-display font-bold uppercase tracking-wider text-text-dark">
-                Bảng Phân Ca Làm Việc Trong Tuần (Weekly Shift Roster)
-              </h3>
-              <p className="text-xs text-text-muted mt-0.5">
-                Nhập tên nhân viên tương ứng vào ca trực của từng ngày. Khung giờ ca sẽ tự động hiển thị phía dưới ô nhập.
-              </p>
+              ))}
             </div>
           </div>
-          <button 
-            onClick={handleResetWeeklyShifts}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-emerald-600 font-display font-bold uppercase tracking-wider transition-colors"
-          >
-            <RefreshCw size={12} />
-            Đặt lại lịch trực
+
+          <div className="shift-field shift-store-field">
+            <label htmlFor="shift-store">Cửa hàng hoạt động</label>
+            <div className="shift-select-wrap">
+              <MapPin size={16} />
+              <select
+                id="shift-store"
+                value={selectedStoreId}
+                onChange={event => setSelectedStoreId(event.target.value)}
+              >
+                {filteredStores.map(store => (
+                  <option key={store.id} value={store.id}>{store.name}</option>
+                ))}
+              </select>
+              <ChevronDown size={16} aria-hidden="true" />
+            </div>
+          </div>
+        </div>
+
+        <div className="shift-store-summary">
+          <div className="shift-summary-store">
+            <span className="shift-summary-label">Đang thao tác</span>
+            <strong>{selectedStore.name}</strong>
+          </div>
+          <div className="shift-summary-divider" />
+          <div className="shift-summary-item">
+            <Clock3 size={15} />
+            <span>Giờ mở cửa</span>
+            <strong>{selectedStore.hours.weekday}</strong>
+          </div>
+          <div className="shift-summary-item">
+            <UsersRound size={15} />
+            <span>Đã xếp</span>
+            <strong>{scheduleStats.assigned} nhân sự</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="shift-roster-card">
+        <div className="shift-roster-header">
+          <div className="shift-roster-title">
+            <div className="shift-section-icon shift-section-icon-dark"><CalendarDays size={18} /></div>
+            <div>
+              <span className="shift-eyebrow">Lịch tuần / {selectedStore.name}</span>
+              <h2>Bảng phân ca làm việc</h2>
+              <p>Nhập tên nhân sự vào từng ngày. Khung giờ và thời gian giao ca được tự động hiển thị.</p>
+            </div>
+          </div>
+          <button type="button" onClick={handleResetWeeklyShifts} className="shift-reset-button">
+            <RotateCcw size={14} />
+            <span>Đặt lại lịch</span>
           </button>
         </div>
 
-        {/* Weekly Shifts Grid */}
-        <div className="table-container overflow-x-auto">
-          <table className="lush-table text-left w-full border-collapse">
+        <div className="shift-roster-toolbar">
+          <div className="shift-toolbar-note">
+            <Info size={15} />
+            <span>Mỗi ô có thể thêm nhiều nhân sự. Nhấn <strong>Thêm nhân sự</strong> khi cần bổ sung.</span>
+          </div>
+          <div className="shift-toolbar-status">
+            <CheckCircle2 size={15} />
+            <span>{scheduleStats.assigned > 0 ? 'Đã cập nhật lịch' : 'Chưa có nhân sự được xếp'}</span>
+          </div>
+        </div>
+
+        <div className="shift-table-scroll">
+          <table className="shift-roster-table">
             <thead>
               <tr>
-                <th className="p-3 text-xs font-bold border-b border-medium min-w-[180px]">Ca trực</th>
+                <th className="shift-label-header">Ca trực</th>
                 {DAYS.map(day => (
-                  <th key={day.key} className="p-3 text-xs font-bold border-b border-medium text-center min-w-[130px]">
-                    {day.label}
+                  <th key={day.key} className={day.isWeekend ? 'is-weekend' : ''}>
+                    <span className="shift-day-short">{day.shortLabel}</span>
+                    <span className="shift-day-full">{day.label}</span>
+                    {day.isWeekend && <small>Cuối tuần</small>}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {/* Morning Shift */}
-              <tr className="hover:bg-slate-50/50">
-                <td className="p-3 border-b border-medium">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-text-dark">Ca sáng</span>
-                    <span className="text-[9px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.morning}</span>
-                  </div>
-                </td>
-                {DAYS.map(day => {
-                  const hours = day.isWeekend 
-                    ? selectedStore.shifts.weekend.morning 
-                    : selectedStore.shifts.weekday.morning;
-                  const val = getShiftValue('morning', day.key);
-                  const nameArray = typeof val === 'string' && val ? val.split(';;') : [''];
-                  return (
-                    <td key={day.key} className="p-2 border-b border-medium cell-highlight">
-                      <div className="flex flex-col gap-1.5 items-center w-full min-w-[130px]">
-                        {nameArray.map((name, idx) => (
-                          <div key={idx} className="flex items-center gap-1 w-full px-1">
-                            <input
-                              type="text"
-                              value={name}
-                              onChange={(e) => handleShiftNameChange('morning', day.key, idx, e.target.value, nameArray)}
-                              placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[10px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
-                              style={{ height: '26px' }}
-                            />
-                            {nameArray.length > 1 && (
-                              <button
-                                onClick={() => handleRemoveNameField('morning', day.key, idx, nameArray)}
-                                className="text-red-500 hover:text-red-700 text-xs font-bold px-1 transition-colors"
-                                title="Xóa nhân sự"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => handleAddNameField('morning', day.key, nameArray)}
-                          className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
-                        >
-                          +
-                        </button>
-                        <span className="text-[8px] text-text-muted mt-0.5 font-mono whitespace-nowrap">{hours}</span>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
+              {SHIFT_ROWS.map(shift => (
+                <tr key={shift.key}>
+                  <th className={`shift-label-cell ${shift.tone}`}>
+                    <span className="shift-number">{shift.number}</span>
+                    <div>
+                      <strong>{shift.label}</strong>
+                      <span>{shift.note}</span>
+                      <small>Chuẩn: {selectedStore.shifts.weekday[shift.key]}</small>
+                    </div>
+                  </th>
+                  {DAYS.map(day => {
+                    const hours = day.isWeekend
+                      ? selectedStore.shifts.weekend[shift.key]
+                      : selectedStore.shifts.weekday[shift.key];
+                    const names = getShiftNames(shift.key, day.key);
+                    const assignedCount = names.filter(name => name.trim()).length;
 
-              {/* Middle Shift */}
-              <tr className="hover:bg-slate-50/50">
-                <td className="p-3 border-b border-medium">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-text-dark">Ca giữa</span>
-                    <span className="text-[9px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.middle}</span>
+                    return (
+                      <td key={day.key} className={`shift-edit-cell ${shift.tone} ${assignedCount ? 'has-assignees' : ''}`}>
+                        <div className="shift-cell-heading">
+                          <span>{assignedCount ? `${assignedCount} người` : 'Chưa xếp'}</span>
+                          <small>{hours}</small>
+                        </div>
+                        <div className="shift-input-stack">
+                          {names.map((name, index) => (
+                            <div className="shift-input-row" key={`${day.key}-${shift.key}-${index}`}>
+                              <UsersRound size={14} aria-hidden="true" />
+                              <input
+                                type="text"
+                                value={name}
+                                onChange={event => updateName(shift.key, day.key, index, event.target.value, names)}
+                                placeholder={`Nhân sự ${index + 1}`}
+                                aria-label={`${shift.label}, ${day.label}, nhân sự ${index + 1}`}
+                              />
+                              {names.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="shift-remove-button"
+                                  onClick={() => removeName(shift.key, day.key, index, names)}
+                                  aria-label={`Xóa nhân sự ${index + 1}`}
+                                  title="Xóa nhân sự"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <button
+                            type="button"
+                            className="shift-add-button"
+                            onClick={() => addName(shift.key, day.key, names)}
+                          >
+                            <Plus size={13} />
+                            <span>Thêm nhân sự</span>
+                          </button>
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              <tr className="shift-handover-row">
+                <th className="shift-label-cell handover">
+                  <span className="shift-number"><Clock3 size={15} /></span>
+                  <div>
+                    <strong>Giao ca</strong>
+                    <span>Khung giờ bàn giao</span>
+                    <small>Thời lượng chuẩn</small>
                   </div>
-                </td>
+                </th>
                 {DAYS.map(day => {
-                  const hours = day.isWeekend 
-                    ? selectedStore.shifts.weekend.middle 
-                    : selectedStore.shifts.weekday.middle;
-                  const val = getShiftValue('middle', day.key);
-                  const nameArray = typeof val === 'string' && val ? val.split(';;') : [''];
-                  return (
-                    <td key={day.key} className="p-2 border-b border-medium cell-highlight">
-                      <div className="flex flex-col gap-1.5 items-center w-full min-w-[130px]">
-                        {nameArray.map((name, idx) => (
-                          <div key={idx} className="flex items-center gap-1 w-full px-1">
-                            <input
-                              type="text"
-                              value={name}
-                              onChange={(e) => handleShiftNameChange('middle', day.key, idx, e.target.value, nameArray)}
-                              placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[10px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
-                              style={{ height: '26px' }}
-                            />
-                            {nameArray.length > 1 && (
-                              <button
-                                onClick={() => handleRemoveNameField('middle', day.key, idx, nameArray)}
-                                className="text-red-500 hover:text-red-700 text-xs font-bold px-1 transition-colors"
-                                title="Xóa nhân sự"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => handleAddNameField('middle', day.key, nameArray)}
-                          className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
-                        >
-                          +
-                        </button>
-                        <span className="text-[8px] text-text-muted mt-0.5 font-mono whitespace-nowrap">{hours}</span>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Afternoon Shift */}
-              <tr className="hover:bg-slate-50/50">
-                <td className="p-3 border-b border-medium">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-text-dark">Ca chiều</span>
-                    <span className="text-[9px] text-text-muted">Giờ chuẩn: {selectedStore.shifts.weekday.afternoon}</span>
-                  </div>
-                </td>
-                {DAYS.map(day => {
-                  const hours = day.isWeekend 
-                    ? selectedStore.shifts.weekend.afternoon 
-                    : selectedStore.shifts.weekday.afternoon;
-                  const val = getShiftValue('afternoon', day.key);
-                  const nameArray = typeof val === 'string' && val ? val.split(';;') : [''];
-                  return (
-                    <td key={day.key} className="p-2 border-b border-medium cell-highlight">
-                      <div className="flex flex-col gap-1.5 items-center w-full min-w-[130px]">
-                        {nameArray.map((name, idx) => (
-                          <div key={idx} className="flex items-center gap-1 w-full px-1">
-                            <input
-                              type="text"
-                              value={name}
-                              onChange={(e) => handleShiftNameChange('afternoon', day.key, idx, e.target.value, nameArray)}
-                              placeholder={`Nhân sự ${idx + 1}`}
-                              className="table-input text-center font-semibold text-[10px] py-0 px-2 border border-slate-200 focus:border-emerald-500 rounded bg-white w-full"
-                              style={{ height: '26px' }}
-                            />
-                            {nameArray.length > 1 && (
-                              <button
-                                onClick={() => handleRemoveNameField('afternoon', day.key, idx, nameArray)}
-                                className="text-red-500 hover:text-red-700 text-xs font-bold px-1 transition-colors"
-                                title="Xóa nhân sự"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => handleAddNameField('afternoon', day.key, nameArray)}
-                          className="text-[10px] text-emerald-600 hover:text-emerald-700 font-bold bg-emerald-50 hover:bg-emerald-100/80 px-2.5 py-0.5 rounded border border-emerald-100 transition-colors w-fit"
-                        >
-                          +
-                        </button>
-                        <span className="text-[8px] text-text-muted mt-0.5 font-mono whitespace-nowrap">{hours}</span>
-                      </div>
-                    </td>
-                  );
-                })}
-              </tr>
-
-              {/* Handover Time (Static, no input box) */}
-              <tr className="hover:bg-slate-50/50">
-                <td className="p-3 border-b border-medium">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-slate-800">Giờ giao ca</span>
-                    {formatLeftHandover(selectedStore.shifts.weekday.handover)}
-                  </div>
-                </td>
-                {DAYS.map(day => {
-                  const hours = day.isWeekend 
-                    ? selectedStore.shifts.weekend.handover 
+                  const handover = day.isWeekend
+                    ? selectedStore.shifts.weekend.handover
                     : selectedStore.shifts.weekday.handover;
+
                   return (
-                    <td key={day.key} className="p-2 border-b border-medium text-center">
-                      {formatHandoverTime(hours)}
+                    <td key={day.key} className="shift-handover-cell">
+                      <HandoverChip value={handover} />
                     </td>
                   );
                 })}
@@ -408,160 +394,71 @@ export default function ShiftsTab({
             </tbody>
           </table>
         </div>
-      </div>
 
-      {/* Lịch nghỉ giữa ca (Quy định giờ đi ăn - Slide 16) */}
-      <div className="bento-card space-y-4">
-        <div className="flex items-center gap-2 border-b border-light pb-2">
-          <Clock size={16} className="text-emerald-600 animate-pulse" />
+        <div className="shift-roster-footer">
+          <span>Cuộn ngang để xem đầy đủ các ngày trên màn hình nhỏ.</span>
+          <span className="shift-footer-key"><span className="shift-footer-dot" /> Khung giờ được lấy tự động theo cửa hàng</span>
+        </div>
+      </section>
+
+      <section className="shift-break-card">
+        <div className="shift-content-heading">
+          <div className="shift-section-icon"><Clock3 size={18} /></div>
           <div>
-            <h3 className="text-sm font-display font-bold uppercase tracking-wider text-text-dark">
-              Lịch Nghỉ Giữa Ca (Quy Định Giờ Đi Ăn)
-            </h3>
-            <p className="text-xs text-text-muted mt-0.5">Thời gian đi ăn tiêu chuẩn cho từng ca làm việc tại cửa hàng.</p>
+            <span className="shift-eyebrow">Quy định vận hành</span>
+            <h2>Lịch nghỉ giữa ca</h2>
+            <p>Khung giờ nghỉ ăn tiêu chuẩn để đảm bảo luôn đủ nhân sự phục vụ khách.</p>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 table-container">
-            <table className="lush-table text-left w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="p-2 text-xs font-bold border-b border-medium w-1/2">Ca sáng</th>
-                  <th className="p-2 text-xs font-bold border-b border-medium w-1/2">Ca chiều</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-2 border-b border-medium text-xs font-semibold text-slate-800">
-                    12h - 12h30: <span className="font-normal text-text-muted">1 nhân sự ca sáng</span>
-                  </td>
-                  <td className="p-2 border-b border-medium text-xs font-semibold text-slate-800">
-                    15h - 15h30: <span className="font-normal text-text-muted">1 nhân sự ca chiều</span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-2 border-b border-medium text-xs font-semibold text-slate-800">
-                    12h30 - 13h: <span className="font-normal text-text-muted">1 nhân sự ca sáng</span>
-                  </td>
-                  <td className="p-2 border-b border-medium text-xs font-semibold text-slate-800">
-                    15h30 - 16h: <span className="font-normal text-text-muted">1 nhân sự ca chiều</span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="p-2 border-b border-medium text-xs font-semibold text-slate-800">
-                    13h30 - 14h: <span className="font-normal text-text-muted">1 nhân sự ca giữa</span>
-                  </td>
-                  <td className="p-2 border-b border-medium text-xs font-semibold text-slate-800">
-                    16h30 - 17h: <span className="font-normal text-text-muted">1 nhân sự ca chiều</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="md:col-span-1 border-l-4 border-emerald-500 bg-emerald-50 bg-opacity-40 p-4 rounded-r-lg flex items-center border-t border-b border-r border-emerald-100/50">
-            <p className="text-[11px] text-emerald-950 leading-relaxed font-semibold">
-              💡 <strong>Lưu ý quan trọng:</strong> Nếu có nhiều nhân sự hơn thì đẩy đi ăn sớm hơn hoặc sắp xếp đi ăn 1 lần 2 người nếu có thể để đảm bảo nhân lực phục vụ khách tại cửa hàng.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Directory of all Stores (Slide 12-15 replica) */}
-      <div className="bento-card space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-light pb-3">
-          <div className="flex items-center gap-2">
-            <Table size={18} className="text-emerald-600" />
-            <div>
-              <h3 className="text-sm font-display font-bold uppercase tracking-wider text-text-dark">
-                Danh Mục Ca Làm Việc Toàn Hệ Thống ({activeRegion === 'HCM' ? 'Hồ Chí Minh' : 'Hà Nội'})
-              </h3>
-              <p className="text-xs text-text-muted mt-0.5">Bảng tra cứu giờ hoạt động và giờ giao ca của các cửa hàng.</p>
+        <div className="shift-break-grid">
+          {BREAK_RULES.map(rule => (
+            <div className="shift-break-item" key={rule.title}>
+              <span>{rule.title}</span>
+              <strong>{rule.time}</strong>
+              <small>{rule.detail}</small>
             </div>
+          ))}
+          <div className="shift-break-note">
+            <Info size={17} />
+            <p><strong>Lưu ý:</strong> Nếu có nhiều nhân sự, có thể chia thành hai lượt để đảm bảo quầy luôn có người phục vụ.</p>
           </div>
         </div>
+      </section>
 
-        {/* Dynamic Regional Shifts directory tables */}
-        <div className="space-y-6 pt-2">
-          {/* Weekday Table */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold font-display uppercase tracking-wider text-emerald-800 bg-emerald-50 w-fit px-2.5 py-1 rounded-full border border-emerald-100 block">
-              Lịch trực ngày thường (Thứ 2 - Thứ 6)
-            </span>
-            <div className="table-container overflow-x-auto">
-              <table className="lush-table text-left w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="p-3 text-xs font-bold border-b border-medium min-w-[180px]">Cửa hàng</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Thời gian hoạt động</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Ca sáng</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Ca giữa</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Ca chiều</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium min-w-[150px]">Giờ giao ca</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {STORES.filter(store => store.region === activeRegion).map(store => (
-                    <tr key={store.id} className="hover:bg-slate-50/50">
-                      <td className="p-3 border-b border-medium font-bold text-xs text-text-dark">{store.name}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono font-semibold">{store.hours.weekday}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekday.morning}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekday.middle}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekday.afternoon}</td>
-                      <td className="p-3 border-b border-medium">{formatDirectoryHandover(store.shifts.weekday.handover)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Weekend Table */}
-          <div className="space-y-2">
-            <span className="text-[10px] font-bold font-display uppercase tracking-wider text-indigo-800 bg-indigo-50 w-fit px-2.5 py-1 rounded-full border border-indigo-100 block">
-              Lịch trực cuối tuần (Thứ 7 - Chủ Nhật)
-            </span>
-            <div className="table-container overflow-x-auto">
-              <table className="lush-table text-left w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="p-3 text-xs font-bold border-b border-medium min-w-[180px]">Cửa hàng</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Thời gian hoạt động</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Ca sáng</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Ca giữa</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium">Ca chiều</th>
-                    <th className="p-3 text-xs font-bold border-b border-medium min-w-[150px]">Giờ giao ca</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {STORES.filter(store => store.region === activeRegion).map(store => (
-                    <tr key={store.id} className="hover:bg-slate-50/50">
-                      <td className="p-3 border-b border-medium font-bold text-xs text-text-dark">{store.name}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono font-semibold">{store.hours.weekend}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekend.morning}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekend.middle}</td>
-                      <td className="p-3 border-b border-medium text-xs font-mono">{store.shifts.weekend.afternoon}</td>
-                      <td className="p-3 border-b border-medium">{formatDirectoryHandover(store.shifts.weekend.handover)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+      <section className="shift-directory-card">
+        <div className="shift-content-heading">
+          <div className="shift-section-icon"><Table2 size={18} /></div>
+          <div>
+            <span className="shift-eyebrow">Tra cứu hệ thống</span>
+            <h2>Danh mục ca làm việc</h2>
+            <p>Tham khảo giờ hoạt động và khung giờ giao ca của các cửa hàng trong khu vực.</p>
           </div>
         </div>
-      </div>
+        <div className="shift-directory-list">
+          <DirectoryTable
+            stores={filteredStores}
+            scheduleKey="weekday"
+            title="Ngày thường / Thứ 2 – Thứ 6"
+          />
+          <DirectoryTable
+            stores={filteredStores}
+            scheduleKey="weekend"
+            title="Cuối tuần / Thứ 7 – Chủ Nhật"
+          />
+        </div>
+      </section>
 
-      {/* Highlighted Important Policy Notes (Slide 16) */}
-      <div className="border-l-4 border-amber-500 bg-amber-50/50 rounded-r-xl p-5 border-t border-b border-r border-amber-100/50 space-y-3">
-        <h4 className="text-xs font-display font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5">
-          ⚠️ Quy định đi ca & chấm công đặc thù
-        </h4>
-        <ol className="space-y-3 text-xs text-amber-900 pl-4 list-decimal font-semibold leading-relaxed">
-          <li>Nhân viên ca sáng vô sớm hơn giờ hoạt động cửa hàng 1 tiếng để dọn dẹp vệ sinh và chuẩn bị mở cửa.</li>
-          <li>Ca chiều hoàn tất đi ăn trước 17h và cả 2 ca có bấm vân tay khi đi ăn.</li>
-          <li>Giờ làm việc không bao gồm giờ trang điểm và ăn sáng. Nếu có thì đi sớm hơn giờ làm việc 30 phút để thực hiện.</li>
+      <section className="shift-policy-card">
+        <div className="shift-policy-heading">
+          <Info size={17} />
+          <strong>Quy định đi ca và chấm công</strong>
+        </div>
+        <ol>
+          <li>Nhân viên ca sáng vào sớm hơn giờ hoạt động cửa hàng 1 tiếng để dọn dẹp và chuẩn bị mở cửa.</li>
+          <li>Ca chiều hoàn tất đi ăn trước 17h; cả hai ca cần chấm vân tay khi đi ăn.</li>
+          <li>Giờ làm việc không bao gồm thời gian trang điểm và ăn sáng. Nếu cần, hãy đến sớm hơn 30 phút.</li>
         </ol>
-      </div>
+      </section>
     </div>
   );
 }
