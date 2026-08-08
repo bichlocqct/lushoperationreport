@@ -330,7 +330,7 @@ export default function ShiftsTab({
                       <td key={day.key} className={`shift-edit-cell ${shift.tone} ${assignedCount ? 'has-assignees' : ''}`}>
                         <div className="shift-cell-heading">
                           <span>{assignedCount ? `${assignedCount} người` : 'Chưa xếp'}</span>
-                          <small>{hours}</small>
+                          <strong className="shift-cell-hours">{hours}</strong>
                         </div>
                         <div className="shift-input-stack">
                           {names.map((name, index) => (
@@ -360,9 +360,10 @@ export default function ShiftsTab({
                             type="button"
                             className="shift-add-button"
                             onClick={() => addName(shift.key, day.key, names)}
+                            aria-label={`Thêm nhân sự cho ${shift.label}, ${day.label}`}
+                            title="Thêm nhân sự"
                           >
                             <Plus size={13} />
-                            <span>Thêm nhân sự</span>
                           </button>
                         </div>
                       </td>

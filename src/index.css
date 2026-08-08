@@ -2493,7 +2493,7 @@ ul.space-y-3 li {
 .shift-label-cell small {
   color: #9aa59c;
   display: block;
-  font-size: 0.57rem;
+  font-size: 0.62rem;
   font-weight: 650;
   margin-top: 0.34rem;
 }
@@ -2517,27 +2517,31 @@ ul.space-y-3 li {
 }
 
 .shift-cell-heading {
-  align-items: center;
+  align-items: flex-start;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.45rem;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
 }
 
 .shift-cell-heading > span {
   color: #8a968c;
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   font-weight: 800;
+  line-height: 1;
 }
 
 .shift-edit-cell.has-assignees .shift-cell-heading > span {
   color: var(--shift-accent-dark);
 }
 
-.shift-cell-heading small {
-  color: #566358;
+.shift-cell-hours {
+  color: #344d3a;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.58rem;
-  font-weight: 800;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -2598,15 +2602,16 @@ ul.space-y-3 li {
 .shift-add-button {
   background: transparent;
   border: 1px dashed #bdcdbf;
-  border-radius: 7px;
+  border-radius: 50%;
   color: var(--shift-accent-dark);
   cursor: pointer;
-  font-size: 0.6rem;
-  font-weight: 800;
-  gap: 0.25rem;
+  flex: 0 0 auto;
+  height: 28px;
   justify-content: center;
   min-height: 28px;
-  padding: 0.35rem 0.3rem;
+  padding: 0;
+  width: 28px;
+  margin: 0.05rem auto 0;
   transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
