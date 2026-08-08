@@ -138,6 +138,7 @@ export default function App() {
   
   // Modal visibility
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [historyFocusId, setHistoryFocusId] = useState(null);
 
   // Load reports and today's session from API (with localStorage fallback) on mount
   useEffect(() => {
@@ -204,10 +205,14 @@ export default function App() {
     localStorage.setItem('lush_weekly_shifts', JSON.stringify(weeklyShifts));
   }, [weeklyShifts]);
 
-  const handleSaveReport = (newReport) => {
+  const handleSaveReport = (newReport, options = {}) => {
     const updatedReports = [newReport, ...reports];
     setReports(updatedReports);
     localStorage.setItem('lush_operation_reports', JSON.stringify(updatedReports));
+    if (options.navigate) {
+      setHistoryFocusId(newReport.id);
+      setActiveTab('history');
+    }
   };
 
   const handleDeleteReport = async (reportId) => {
@@ -504,6 +509,7 @@ export default function App() {
               reports={reports}
               onDeleteReport={handleDeleteReport}
               onOpenExportModal={() => setIsReportModalOpen(true)}
+              focusReportId={historyFocusId}
             />
           )}
         </div>

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { X, Copy, Check, FileDown, FileText, Globe } from 'lucide-react';
+import { X, Copy, Check, FileText, Globe } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { STORES, KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
+import { getStoreShift, STORES, KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 import { generateReportHTML } from '../utils/reportGenerator';
 
 // Native React Form Preview Component for visual presentation inside the app
@@ -459,7 +459,6 @@ export default function ReportModal({
   const activeStore = STORES.find(s => s.name === storeName) || STORES[0];
   const dayOfWeek = new Date().getDay(); // 0 is Sunday, 6 is Saturday
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  const shiftTimes = isWeekend ? activeStore.shifts.weekend : activeStore.shifts.weekday;
 
   const getDayKey = () => {
     const mapping = {
@@ -475,6 +474,11 @@ export default function ReportModal({
   };
 
   const todayDayKey = getDayKey();
+  const shiftTimes = getStoreShift(
+    activeStore,
+    isWeekend ? 'weekend' : 'weekday',
+    todayDayKey
+  );
 
   const getShiftStaff = (shiftKey) => {
     const storeShifts = weeklyShifts[activeStore.id] || {};
@@ -764,7 +768,7 @@ export default function ReportModal({
     }
 
     // 2. Save report to localStorage database (state)
-    onSaveReport(reportData);
+    onSaveReport(reportData, { navigate: !silent });
 
     const savedInfo = { reportData, htmlContent, fileName };
     savedReportRef.current = savedInfo;
@@ -796,40 +800,8 @@ export default function ReportModal({
   };
 
   const handleExportReport = async () => {
-    // Open the print window immediately so browsers do not block it after the async save.
-    const printWindow = window.open('', '_blank', 'width=1100,height=800');
-    if (!printWindow) {
-      window.alert('Trình duyệt đã chặn cửa sổ in. Hãy cho phép pop-up để xuất PDF.');
-      return;
-    }
-
-    printWindow.document.write('<title>Đang chuẩn bị bản PDF...</title><p style="font-family: sans-serif; padding: 24px;">Đang chuẩn bị bản PDF...</p>');
-    printWindow.document.close();
-
     const result = await saveReportToHistoryAndLocal(false);
-    if (!result?.htmlContent) {
-      printWindow.close();
-      return;
-    }
-
-    printWindow.document.open();
-    printWindow.document.write(result.htmlContent);
-    printWindow.document.close();
-
-    let hasPrinted = false;
-    const openPrintDialog = () => {
-      if (hasPrinted) return;
-      hasPrinted = true;
-      printWindow.focus();
-      printWindow.print();
-    };
-
-    printWindow.addEventListener('load', () => {
-      window.setTimeout(openPrintDialog, 250);
-    }, { once: true });
-
-    // Fallback for generated documents that do not emit load consistently.
-    window.setTimeout(openPrintDialog, 700);
+    if (!result?.reportData) return;
 
     confetti({
       particleCount: 80,
@@ -896,7 +868,7 @@ export default function ReportModal({
         {/* Footer Actions */}
         <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-t border-medium gap-3 bg-white" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderTop: '1px solid var(--border-medium)', gap: '12px', backgroundColor: '#ffffff' }}>
           <span className="text-[10px] text-text-muted font-sans uppercase tracking-wider">
-            * Báo cáo sẽ được lưu vào Lịch sử Báo cáo trước khi mở hộp thoại in
+            * Báo cáo sẽ được lưu và mở ngay trong Lịch sử Báo cáo
           </span>
           <div className="flex gap-2 w-full sm:w-auto" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button
@@ -918,10 +890,10 @@ export default function ReportModal({
             <button
               onClick={handleExportReport}
               className="btn-black text-xs py-2 px-4 flex-1 sm:flex-initial flex items-center justify-center gap-1.5"
-              title="Lưu vào Lịch sử Báo cáo và mở hộp thoại in"
+              title="Lưu báo cáo và mở báo cáo vừa lưu trong Lịch sử Báo cáo"
             >
-              <FileDown size={14} />
-              Xuất Báo Cáo
+              <FileText size={14} />
+              Lưu & Xem Báo Cáo
             </button>
           </div>
         </div>

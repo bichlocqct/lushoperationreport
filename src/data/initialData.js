@@ -23,6 +23,9 @@ export const STORES = [
       weekday: { morning: '8h30 - 17h', middle: '12h - 20h30', afternoon: '13h - 21h30', handover: '13h - 17h (4 tiếng)' },
       weekend: { morning: '8h30 - 17h', middle: '12h - 20h30', afternoon: '13h30 - 22h', handover: '13h30 - 17h (3.5 tiếng)' }
     },
+    dayShiftOverrides: {
+      friday: { afternoon: '13h30 - 22h', handover: '13h30 - 17h30 (4 tiếng)' }
+    },
     lunchSchedule: {
       morning: ['12h - 12h30: 1 nhân sự ca sáng', '12h30 - 13h: 1 nhân sự ca sáng'],
       middle: ['13h30 - 14h: 1 nhân sự ca giữa'],
@@ -90,6 +93,11 @@ export const STORES = [
     }
   }
 ];
+
+export const getStoreShift = (store, scheduleKey, dayKey) => ({
+  ...(store?.shifts?.[scheduleKey] || {}),
+  ...(scheduleKey === 'weekday' ? store?.dayShiftOverrides?.[dayKey] || {} : {})
+});
 
 export const SHIFT_NOTES = [
   'Nhân viên ca sáng vô sớm hơn giờ hoạt động cửa hàng 1 tiếng để dọn dẹp vệ sinh và chuẩn bị mở cửa.',

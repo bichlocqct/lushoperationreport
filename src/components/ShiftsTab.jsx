@@ -13,7 +13,7 @@ import {
   Trash2,
   UsersRound
 } from 'lucide-react';
-import { STORES } from '../data/initialData';
+import { getStoreShift, STORES } from '../data/initialData';
 
 const DAYS = [
   { key: 'monday', label: 'Thứ 2', shortLabel: 'T2', isWeekend: false },
@@ -320,9 +320,12 @@ export default function ShiftsTab({
                     </div>
                   </th>
                   {DAYS.map(day => {
-                    const hours = day.isWeekend
-                      ? selectedStore.shifts.weekend[shift.key]
-                      : selectedStore.shifts.weekday[shift.key];
+                    const daySchedule = getStoreShift(
+                      selectedStore,
+                      day.isWeekend ? 'weekend' : 'weekday',
+                      day.key
+                    );
+                    const hours = daySchedule[shift.key];
                     const names = getShiftNames(shift.key, day.key);
                     const assignedCount = names.filter(name => name.trim()).length;
 
@@ -381,9 +384,12 @@ export default function ShiftsTab({
                   </div>
                 </th>
                 {DAYS.map(day => {
-                  const handover = day.isWeekend
-                    ? selectedStore.shifts.weekend.handover
-                    : selectedStore.shifts.weekday.handover;
+                  const daySchedule = getStoreShift(
+                    selectedStore,
+                    day.isWeekend ? 'weekend' : 'weekday',
+                    day.key
+                  );
+                  const handover = daySchedule.handover;
 
                   return (
                     <td key={day.key} className="shift-handover-cell">

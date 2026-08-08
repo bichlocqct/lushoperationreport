@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Calendar, Trash2, Copy, Check, Eye, EyeOff, FileText, ShoppingBag, Globe } from 'lucide-react';
 import { generateReportHTML } from '../utils/reportGenerator';
 import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
@@ -433,10 +433,24 @@ const FormPreview = ({
   );
 };
 
-export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal }) {
+export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal, focusReportId }) {
   const [expandedReportId, setExpandedReportId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
+
+  useEffect(() => {
+    if (!focusReportId || !reports.some(report => report.id === focusReportId)) return undefined;
+
+    setExpandedReportId(focusReportId);
+    const scrollTimer = window.setTimeout(() => {
+      document.getElementById(`history-report-${focusReportId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }, 80);
+
+    return () => window.clearTimeout(scrollTimer);
+  }, [focusReportId, reports]);
 
   const toggleExpand = (id) => {
     setExpandedReportId(prev => prev === id ? null : id);
@@ -511,6 +525,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal 
             return (
               <div 
                 key={report.id}
+                id={`history-report-${report.id}`}
                 className="lush-card p-0 overflow-hidden transition-all duration-300 bg-white"
               >
                 {/* Header Card Summary */}
