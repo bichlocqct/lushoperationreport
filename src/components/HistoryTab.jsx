@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Calendar, Trash2, Copy, Check, Eye, EyeOff, FileText, ShoppingBag, Globe } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BarChart3, Calendar, Check, ChevronDown, Copy, Eye, EyeOff, FileText, Globe, ShoppingBag, Store, Trash2, UsersRound } from 'lucide-react';
 import { generateReportHTML } from '../utils/reportGenerator';
 import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 
@@ -433,10 +433,281 @@ const FormPreview = ({
   );
 };
 
+const HISTORY_DAYS = [
+  { key: 'monday', label: 'Thứ 2', shortLabel: 'T2' },
+  { key: 'tuesday', label: 'Thứ 3', shortLabel: 'T3' },
+  { key: 'wednesday', label: 'Thứ 4', shortLabel: 'T4' },
+  { key: 'thursday', label: 'Thứ 5', shortLabel: 'T5' },
+  { key: 'friday', label: 'Thứ 6', shortLabel: 'T6' },
+  { key: 'saturday', label: 'Thứ 7', shortLabel: 'T7' },
+  { key: 'sunday', label: 'Chủ Nhật', shortLabel: 'CN' }
+];
+
+const HISTORY_SHIFTS = [
+  { key: 'morning', label: 'Ca sáng' },
+  { key: 'middle', label: 'Ca giữa' },
+  { key: 'afternoon', label: 'Ca chiều' }
+];
+
+const getReportDate = (report) => {
+  const date = report?.date ? new Date(report.date) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+};
+
+const getWeekStart = (date) => {
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const day = start.getDay();
+  const daysSinceMonday = day === 0 ? 6 : day - 1;
+  start.setDate(start.getDate() - daysSinceMonday);
+  return start;
+};
+
+const formatDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatShortDate = (date) => (
+  `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
+);
+
+const getDayKeyFromDate = (date) => {
+  const day = date.getDay();
+  return HISTORY_DAYS[day === 0 ? 6 : day - 1].key;
+};
+
+const countStaff = (value) => {
+  if (typeof value !== 'string' || !value.trim()) return 0;
+  return value.includes(';;')
+    ? value.split(';;').filter(name => name.trim()).length
+    : value.split(',').filter(name => name.trim()).length;
+};
+
+const getRosterValue = (report, shiftKey, dayKey) => {
+  const rosterValue = report.weeklyShiftsRoster?.[shiftKey]?.[dayKey];
+  if (rosterValue) return rosterValue;
+
+  const reportDate = getReportDate(report);
+  return getDayKeyFromDate(reportDate) === dayKey
+    ? report.todayShifts?.[shiftKey] || ''
+    : '';
+};
+
+const buildWeeklySummaries = (reports) => {
+  const weekMap = new Map();
+
+  reports.forEach(report => {
+    const reportDate = getReportDate(report);
+    const weekStart = getWeekStart(reportDate);
+    const weekKey = formatDateKey(weekStart);
+    const storeName = report.storeName || 'Chưa xác định cửa hàng';
+
+    if (!weekMap.has(weekKey)) {
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      weekMap.set(weekKey, {
+        key: weekKey,
+        start: weekStart,
+        end: weekEnd,
+        reports: [],
+        stores: new Map()
+      });
+    }
+
+    const week = weekMap.get(weekKey);
+    week.reports.push(report);
+
+    const existingStore = week.stores.get(storeName);
+    if (!existingStore) {
+      week.stores.set(storeName, {
+        name: storeName,
+        reports: [report],
+        latestReport: report,
+        latestDate: reportDate
+      });
+    } else {
+      existingStore.reports.push(report);
+      if (reportDate > existingStore.latestDate) {
+        existingStore.latestReport = report;
+        existingStore.latestDate = reportDate;
+      }
+    }
+  });
+
+  return Array.from(weekMap.values())
+    .sort((a, b) => b.start - a.start)
+    .map(week => {
+      const dayTotals = Object.fromEntries(
+        HISTORY_DAYS.map(day => [day.key, { morning: 0, middle: 0, afternoon: 0 }])
+      );
+
+      Array.from(week.stores.values()).forEach(store => {
+        HISTORY_DAYS.forEach(day => {
+          HISTORY_SHIFTS.forEach(shift => {
+            dayTotals[day.key][shift.key] += countStaff(
+              getRosterValue(store.latestReport, shift.key, day.key)
+            );
+          });
+        });
+      });
+
+      const stores = Array.from(week.stores.values())
+        .map(store => ({
+          ...store,
+          rosterTotal: HISTORY_DAYS.reduce((total, day) => (
+            total + HISTORY_SHIFTS.reduce((dayTotal, shift) => (
+              dayTotal + countStaff(getRosterValue(store.latestReport, shift.key, day.key))
+            ), 0)
+          ), 0)
+        }))
+        .sort((a, b) => b.reports.length - a.reports.length || a.name.localeCompare(b.name));
+
+      const dayTotalsWithSum = HISTORY_DAYS.map(day => ({
+        ...day,
+        ...dayTotals[day.key],
+        total: HISTORY_SHIFTS.reduce((sum, shift) => sum + dayTotals[day.key][shift.key], 0)
+      }));
+
+      return {
+        ...week,
+        stores,
+        dayTotals: dayTotalsWithSum,
+        totalAssignments: dayTotalsWithSum.reduce((sum, day) => sum + day.total, 0)
+      };
+    });
+};
+
+function HistorySummary({ summaries, selectedWeekKey, onWeekChange }) {
+  const selectedWeek = summaries.find(week => week.key === selectedWeekKey) || summaries[0];
+  if (!selectedWeek) return null;
+
+  const dayTotals = Object.fromEntries(selectedWeek.dayTotals.map(day => [day.key, day]));
+  const weekLabel = `${formatShortDate(selectedWeek.start)} – ${formatShortDate(selectedWeek.end)}/${selectedWeek.end.getFullYear()}`;
+
+  return (
+    <section className="history-summary-panel">
+      <div className="history-summary-header">
+        <div className="history-summary-title">
+          <div className="history-summary-icon"><BarChart3 size={18} /></div>
+          <div>
+            <span className="history-summary-eyebrow">Tổng hợp vận hành</span>
+            <h3>Báo cáo theo tuần</h3>
+            <p>Tổng hợp report theo cửa hàng và số nhân sự ở từng ca trong tuần.</p>
+          </div>
+        </div>
+        <label className="history-week-select">
+          <span>Tuần báo cáo</span>
+          <div>
+            <Calendar size={14} />
+            <select value={selectedWeek.key} onChange={event => onWeekChange(event.target.value)}>
+              {summaries.map(week => (
+                <option key={week.key} value={week.key}>
+                  {formatShortDate(week.start)} – {formatShortDate(week.end)}/{week.end.getFullYear()}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} />
+          </div>
+        </label>
+      </div>
+
+      <div className="history-summary-metrics">
+        <div>
+          <span>Khoảng thời gian</span>
+          <strong>{weekLabel}</strong>
+        </div>
+        <div>
+          <span>Tổng báo cáo</span>
+          <strong>{selectedWeek.reports.length}</strong>
+        </div>
+        <div>
+          <span>Cửa hàng</span>
+          <strong>{selectedWeek.stores.length}</strong>
+        </div>
+        <div>
+          <span>Tổng lượt ca</span>
+          <strong>{selectedWeek.totalAssignments}</strong>
+        </div>
+      </div>
+
+      <div className="history-summary-layout">
+        <div className="history-weekly-table-wrap">
+          <div className="history-subheading">
+            <UsersRound size={15} />
+            <span>Tổng nhân sự theo ngày và ca</span>
+          </div>
+          <div className="history-weekly-scroll">
+            <table className="history-weekly-table">
+              <thead>
+                <tr>
+                  <th>Ca / Ngày</th>
+                  {HISTORY_DAYS.map(day => <th key={day.key}>{day.shortLabel}</th>)}
+                  <th>Tổng</th>
+                </tr>
+              </thead>
+              <tbody>
+                {HISTORY_SHIFTS.map(shift => (
+                  <tr key={shift.key}>
+                    <th>{shift.label}</th>
+                    {HISTORY_DAYS.map(day => (
+                      <td key={day.key}>{dayTotals[day.key][shift.key]}</td>
+                    ))}
+                    <td className="history-week-total">
+                      {HISTORY_DAYS.reduce((sum, day) => sum + dayTotals[day.key][shift.key], 0)}
+                    </td>
+                  </tr>
+                ))}
+                <tr className="history-day-total-row">
+                  <th>Tổng/ngày</th>
+                  {HISTORY_DAYS.map(day => <td key={day.key}>{dayTotals[day.key].total}</td>)}
+                  <td>{selectedWeek.totalAssignments}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="history-summary-note">Số liệu lấy từ bản report mới nhất của từng cửa hàng trong tuần, tránh cộng trùng khi cửa hàng lưu nhiều lần.</p>
+        </div>
+
+        <div className="history-store-summary">
+          <div className="history-subheading">
+            <Store size={15} />
+            <span>Report theo cửa hàng</span>
+          </div>
+          <div className="history-store-list">
+            {selectedWeek.stores.map(store => (
+              <div className="history-store-row" key={store.name}>
+                <div>
+                  <strong>{store.name}</strong>
+                  <span>Report gần nhất: {formatShortDate(store.latestDate)}</span>
+                </div>
+                <div className="history-store-count">
+                  <strong>{store.reports.length}</strong>
+                  <span>report</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal, focusReportId }) {
   const [expandedReportId, setExpandedReportId] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
+  const weeklySummaries = useMemo(() => buildWeeklySummaries(reports), [reports]);
+  const [selectedWeekKey, setSelectedWeekKey] = useState(weeklySummaries[0]?.key || '');
+
+  useEffect(() => {
+    if (weeklySummaries.length > 0 && !weeklySummaries.some(week => week.key === selectedWeekKey)) {
+      setSelectedWeekKey(weeklySummaries[0].key);
+    }
+  }, [selectedWeekKey, weeklySummaries]);
 
   useEffect(() => {
     if (!focusReportId || !reports.some(report => report.id === focusReportId)) return undefined;
@@ -496,6 +767,14 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
           Xem lại và sao chép nhanh các báo cáo đã hoàn thành của những ca làm việc trước đó.
         </p>
       </div>
+
+      {reports.length > 0 && (
+        <HistorySummary
+          summaries={weeklySummaries}
+          selectedWeekKey={selectedWeekKey}
+          onWeekChange={setSelectedWeekKey}
+        />
+      )}
 
       {reports.length === 0 ? (
         <div className="lush-card flex flex-col items-center justify-center p-12 text-center space-y-4">
