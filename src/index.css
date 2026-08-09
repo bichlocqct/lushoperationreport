@@ -3988,6 +3988,12 @@ ul.space-y-3 li {
   }
 }
 
+/* The store-first history replaces the old cross-store total block. */
+.history-summary-layout,
+.history-store-rosters {
+  display: none !important;
+}
+
 
 
 
