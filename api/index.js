@@ -52,6 +52,7 @@ async function initDB() {
         raw_text TEXT,
         today_shifts JSONB,
         weekly_shifts_roster JSONB,
+        employee_schedule_roster JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
@@ -60,6 +61,7 @@ async function initDB() {
     await pool.query(`
       ALTER TABLE reports ADD COLUMN IF NOT EXISTS grading_items JSONB;
       ALTER TABLE reports ADD COLUMN IF NOT EXISTS overall_comments TEXT;
+      ALTER TABLE reports ADD COLUMN IF NOT EXISTS employee_schedule_roster JSONB;
     `);
     isTableCreated = true;
     console.log("Đã kết nối thành công với PostgreSQL và khởi tạo bảng reports");
@@ -91,12 +93,12 @@ app.post('/api/save-report', async (req, res) => {
         report_id, file_name, html_content, store_name, leader, date, date_str, template,
         progress, roster_shelf, roster_pos, opening_checks, opening_notes, selling_checks,
         selling_notes, kpi_values, raw_text, today_shifts, weekly_shifts_roster,
-        grading_items, overall_comments, updated_at
+        employee_schedule_roster, grading_items, overall_comments, updated_at
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8,
         $9, $10, $11, $12, $13, $14,
         $15, $16, $17, $18, $19,
-        $20, $21, NOW()
+        $20, $21, $22, NOW()
       )
       ON CONFLICT (report_id) DO UPDATE SET
         file_name = EXCLUDED.file_name,
@@ -117,6 +119,7 @@ app.post('/api/save-report', async (req, res) => {
         raw_text = EXCLUDED.raw_text,
         today_shifts = EXCLUDED.today_shifts,
         weekly_shifts_roster = EXCLUDED.weekly_shifts_roster,
+        employee_schedule_roster = EXCLUDED.employee_schedule_roster,
         grading_items = EXCLUDED.grading_items,
         overall_comments = EXCLUDED.overall_comments,
         updated_at = NOW()
@@ -143,6 +146,7 @@ app.post('/api/save-report', async (req, res) => {
       reportData?.rawText || null,
       reportData?.todayShifts ? JSON.stringify(reportData.todayShifts) : null,
       reportData?.weeklyShiftsRoster ? JSON.stringify(reportData.weeklyShiftsRoster) : null,
+      reportData?.employeeScheduleRoster ? JSON.stringify(reportData.employeeScheduleRoster) : null,
       reportData?.gradingScores ? JSON.stringify(reportData.gradingScores) : null,
       reportData?.overallComments || null
     ];
@@ -170,7 +174,8 @@ app.post('/api/save-report', async (req, res) => {
       rawText: r.raw_text,
       fileName: r.file_name,
       todayShifts: r.today_shifts,
-      weeklyShiftsRoster: r.weekly_shifts_roster
+      weeklyShiftsRoster: r.weekly_shifts_roster,
+      employeeScheduleRoster: r.employee_schedule_roster
     };
 
     // Lưu file HTML cục bộ và đẩy lên GitHub nếu chạy ở local
@@ -254,7 +259,8 @@ app.get('/api/reports', async (req, res) => {
       rawText: r.raw_text,
       fileName: r.file_name,
       todayShifts: r.today_shifts,
-      weeklyShiftsRoster: r.weekly_shifts_roster
+      weeklyShiftsRoster: r.weekly_shifts_roster,
+      employeeScheduleRoster: r.employee_schedule_roster
     }));
     res.status(200).json(formattedReports);
   } catch (error) {

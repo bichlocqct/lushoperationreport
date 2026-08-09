@@ -24,6 +24,7 @@ export function generateReportHTML(reportData, template = 'standard') {
     overallComments = '',
     todayShifts,
     weeklyShiftsRoster,
+    employeeScheduleRoster,
     fileName
   } = reportData;
 
@@ -87,7 +88,7 @@ export function generateReportHTML(reportData, template = 'standard') {
 
   // 4. Weekly shifts roster HTML
   let weeklyRosterHTML = '';
-  if (weeklyShiftsRoster) {
+  if (weeklyShiftsRoster && !employeeScheduleRoster) {
     const getCell = (shiftKey, dayKey) => {
       const val = weeklyShiftsRoster[shiftKey]?.[dayKey] || '';
       if (!val) return '--';
@@ -149,6 +150,47 @@ export function generateReportHTML(reportData, template = 'standard') {
             <td style="border: 1px solid #000000; padding: 5px; font-size: 8px; font-weight: bold; text-align: center; background-color: #fafafa;">${getCell('afternoon', 'sunday')}</td>
           </tr>
         </tbody>
+      </table>
+    `;
+  }
+
+  // 5. Employee-first weekly roster table
+  let employeeRosterHTML = '';
+  if (employeeScheduleRoster?.employees?.length) {
+    const rosterDays = [
+      { key: 'monday', label: 'Thá»© 2' },
+      { key: 'tuesday', label: 'Thá»© 3' },
+      { key: 'wednesday', label: 'Thá»© 4' },
+      { key: 'thursday', label: 'Thá»© 5' },
+      { key: 'friday', label: 'Thá»© 6' },
+      { key: 'saturday', label: 'Thá»© 7' },
+      { key: 'sunday', label: 'Chá»§ Nháº­t' }
+    ];
+    const getEmployeeCode = (employeeId, dayKey) => (
+      employeeScheduleRoster.days?.[dayKey]?.[employeeId] || '--'
+    );
+
+    const employeeRows = employeeScheduleRoster.employees.map(employee => `
+      <tr>
+        <td style="border: 1px solid #000000; padding: 6px 8px; font-size: 8px; font-weight: bold; text-align: left;">${employee.name || '--'}</td>
+        ${rosterDays.map(day => `
+          <td style="border: 1px solid #000000; padding: 6px 4px; font-family: var(--font-mono); font-size: 9px; font-weight: bold; text-align: center;">${getEmployeeCode(employee.id, day.key)}</td>
+        `).join('')}
+      </tr>
+    `).join('');
+
+    employeeRosterHTML = `
+      <div style="font-size: 8px; font-weight: bold; text-transform: uppercase; margin-top: 15px; margin-bottom: 6px; color: #52525b; letter-spacing: 0.05em; page-break-inside: avoid;">
+        4. Lịch Làm Việc Theo Nhân Viên / Employee Weekly Roster
+      </div>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 5px; page-break-inside: avoid;">
+        <thead>
+          <tr style="background-color: #f4f4f5;">
+            <th style="border: 1px solid #000000; padding: 6px 8px; font-size: 7.5px; font-weight: bold; text-align: left; width: 22%;">Nhân viên</th>
+            ${rosterDays.map(day => `<th style="border: 1px solid #000000; padding: 6px 4px; font-size: 7.5px; font-weight: bold; text-align: center;">${day.label}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${employeeRows}</tbody>
       </table>
     `;
   }
@@ -657,6 +699,7 @@ export function generateReportHTML(reportData, template = 'standard') {
 
       <!-- 4. Weekly Shifts Roster table -->
       ${weeklyRosterHTML}
+      ${employeeRosterHTML}
     </div>
 
     <!-- II. Checklist Mở Cửa (Opening) -->

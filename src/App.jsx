@@ -156,14 +156,30 @@ export default function App() {
   // Load reports and today's session from API (with localStorage fallback) on mount
   useEffect(() => {
     const fetchReports = async () => {
+      let localReports = [];
+      const savedReports = localStorage.getItem('lush_operation_reports');
+      if (savedReports) {
+        try {
+          const parsedReports = JSON.parse(savedReports);
+          if (Array.isArray(parsedReports)) localReports = parsedReports;
+        } catch (e) {
+          console.error('Error parsing reports from localStorage', e);
+        }
+      }
+
       try {
         const response = await fetch('/api/reports');
         if (response.ok) {
           const dbReports = await response.json();
           if (Array.isArray(dbReports) && dbReports.length > 0) {
-            setReports(dbReports);
-            // Đồng bộ lại local storage cho chế độ offline
-            localStorage.setItem('lush_operation_reports', JSON.stringify(dbReports));
+            const dbReportIds = new Set(dbReports.map(report => report.id));
+            const mergedReports = [
+              ...dbReports,
+              ...localReports.filter(report => !dbReportIds.has(report.id))
+            ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+            setReports(mergedReports);
+            // Đồng bộ lại local storage nhưng vẫn giữ report local chưa có trên API.
+            localStorage.setItem('lush_operation_reports', JSON.stringify(mergedReports));
             return;
           }
         }
@@ -172,14 +188,7 @@ export default function App() {
       }
 
       // Fallback về localStorage nếu API lỗi hoặc không khả dụng
-      const savedReports = localStorage.getItem('lush_operation_reports');
-      if (savedReports) {
-        try {
-          setReports(JSON.parse(savedReports));
-        } catch (e) {
-          console.error('Error parsing reports from localStorage', e);
-        }
-      }
+      if (localReports.length > 0) setReports(localReports);
     };
 
     fetchReports();
@@ -224,7 +233,7 @@ export default function App() {
   }, [employeeRoster]);
 
   const handleSaveReport = (newReport, options = {}) => {
-    const updatedReports = [newReport, ...reports];
+    const updatedReports = [newReport, ...reports.filter(report => report.id !== newReport.id)];
     setReports(updatedReports);
     localStorage.setItem('lush_operation_reports', JSON.stringify(updatedReports));
     if (options.navigate) {

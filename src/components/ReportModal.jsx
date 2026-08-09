@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Copy, Check, FileText, Globe } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { getStoreShift, STORES, KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
@@ -24,6 +24,7 @@ const FormPreview = ({
   sellingIssues,
   todayShifts,
   weeklyShiftsRoster,
+  employeeScheduleRoster,
   gradingScores = {},
   overallComments = ''
 }) => {
@@ -154,7 +155,37 @@ const FormPreview = ({
         </div>
 
         {/* 4. Weekly Shift Roster Table */}
-        {weeklyShiftsRoster && (
+        {employeeScheduleRoster?.employees?.length > 0 && (
+          <>
+            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '15px', marginBottom: '6px', color: '#52525b', letterSpacing: '0.05em' }}>
+              4. Lịch Làm Việc Theo Nhân Viên (Employee Weekly Roster)
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '5px' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f4f4f5' }}>
+                  <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'left' }}>Nhân viên</th>
+                  {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'].map(day => (
+                    <th key={day} style={{ border: '1px solid #000000', padding: '4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center' }}>{day}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {employeeScheduleRoster.employees.map(employee => (
+                  <tr key={employee.id}>
+                    <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>{employee.name || '--'}</td>
+                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(dayKey => (
+                      <td key={dayKey} style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>
+                        {employeeScheduleRoster.days?.[dayKey]?.[employee.id] || '--'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {weeklyShiftsRoster && !employeeScheduleRoster && (
           <>
             <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '15px', marginBottom: '6px', color: '#52525b', letterSpacing: '0.05em' }}>
               4. Lịch Trực Tuần Của Cửa Hàng (Weekly Shift Roster)
@@ -446,6 +477,14 @@ export default function ReportModal({
   const [copied, setCopied] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
   const savedReportRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setHasSaved(false);
+      setCopied(false);
+      savedReportRef.current = null;
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -898,6 +937,7 @@ export default function ReportModal({
               sellingIssues={sellingIssues}
               todayShifts={todayShifts}
               weeklyShiftsRoster={weeklyShiftsRoster}
+              employeeScheduleRoster={employeeScheduleRoster}
               gradingScores={gradingScores}
               overallComments={overallComments}
             />

@@ -18,6 +18,7 @@ const FormPreview = ({
   reportTemplate,
   todayShifts,
   weeklyShiftsRoster,
+  employeeScheduleRoster,
   gradingScores = {},
   overallComments = ''
 }) => {
@@ -164,7 +165,37 @@ const FormPreview = ({
         </div>
 
         {/* 4. Weekly Shift Roster Table */}
-        {weeklyShiftsRoster && (
+        {employeeScheduleRoster?.employees?.length > 0 && (
+          <>
+            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '15px', marginBottom: '6px', color: '#52525b', letterSpacing: '0.05em' }}>
+              4. Lịch Làm Việc Theo Nhân Viên (Employee Weekly Roster)
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '5px' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f4f4f5' }}>
+                  <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'left' }}>Nhân viên</th>
+                  {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'].map(day => (
+                    <th key={day} style={{ border: '1px solid #000000', padding: '4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center' }}>{day}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {employeeScheduleRoster.employees.map(employee => (
+                  <tr key={employee.id}>
+                    <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>{employee.name || '--'}</td>
+                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(dayKey => (
+                      <td key={dayKey} style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>
+                        {employeeScheduleRoster.days?.[dayKey]?.[employee.id] || '--'}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {weeklyShiftsRoster && !employeeScheduleRoster && (
           <>
             <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', marginTop: '15px', marginBottom: '6px', color: '#52525b', letterSpacing: '0.05em' }}>
               4. Lịch Trực Tuần Của Cửa Hàng (Weekly Shift Roster)
@@ -510,6 +541,37 @@ const countScheduleCode = (report, code, dayKey) => {
   return legacyShift ? countStaff(getRosterValue(report, legacyShift, dayKey)) : 0;
 };
 
+const buildStoreScheduleTotals = (storeReports) => {
+  const reportsByDate = [...storeReports].sort((a, b) => getReportDate(b) - getReportDate(a));
+  const weeklyRosterReport = reportsByDate.find(report => (
+    report.employeeScheduleRoster?.employees?.length > 0 || report.weeklyShiftsRoster
+  ));
+
+  const dayTotals = HISTORY_DAYS.map(day => {
+    const dailyReport = weeklyRosterReport || reportsByDate.find(report => (
+      getDayKeyFromDate(getReportDate(report)) === day.key
+    )) || reportsByDate[0];
+
+    return {
+      key: day.key,
+      label: day.label,
+      shortLabel: day.shortLabel,
+      ...HISTORY_SHIFTS.reduce((totals, shift) => ({
+        ...totals,
+        [shift.key]: dailyReport ? countScheduleCode(dailyReport, shift.key, day.key) : 0
+      }), {}),
+      total: dailyReport
+        ? HISTORY_SHIFTS.reduce((sum, shift) => sum + countScheduleCode(dailyReport, shift.key, day.key), 0)
+        : 0
+    };
+  });
+
+  return {
+    dayTotals,
+    total: dayTotals.reduce((sum, day) => sum + day.total, 0)
+  };
+};
+
 const buildWeeklySummaries = (reports) => {
   const weekMap = new Map();
 
@@ -561,28 +623,24 @@ const buildWeeklySummaries = (reports) => {
         ])
       );
 
-      Array.from(week.stores.values()).forEach(store => {
-        HISTORY_DAYS.forEach(day => {
+      const stores = Array.from(week.stores.values())
+        .map(store => {
+          const scheduleTotals = buildStoreScheduleTotals(store.reports);
+          return {
+            ...store,
+            dayTotals: scheduleTotals.dayTotals,
+            rosterTotal: scheduleTotals.total
+          };
+        })
+        .sort((a, b) => b.reports.length - a.reports.length || a.name.localeCompare(b.name));
+
+      stores.forEach(store => {
+        store.dayTotals.forEach(day => {
           HISTORY_SHIFTS.forEach(shift => {
-            dayTotals[day.key][shift.key] += countScheduleCode(
-              store.latestReport,
-              shift.key,
-              day.key
-            );
+            dayTotals[day.key][shift.key] += day[shift.key];
           });
         });
       });
-
-      const stores = Array.from(week.stores.values())
-        .map(store => ({
-          ...store,
-          rosterTotal: HISTORY_DAYS.reduce((total, day) => (
-            total + HISTORY_SHIFTS.reduce((dayTotal, shift) => (
-              dayTotal + countScheduleCode(store.latestReport, shift.key, day.key)
-            ), 0)
-          ), 0)
-        }))
-        .sort((a, b) => b.reports.length - a.reports.length || a.name.localeCompare(b.name));
 
       const dayTotalsWithSum = HISTORY_DAYS.map(day => ({
         ...day,
@@ -711,6 +769,62 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange }) {
           </div>
         </div>
       </div>
+
+      <div className="history-store-rosters">
+        <div className="history-subheading">
+          <Store size={15} />
+          <span>Tổng nhân sự theo từng cửa hàng</span>
+        </div>
+        <div className="history-store-roster-list">
+          {selectedWeek.stores.map(store => {
+            const storeDayTotals = Object.fromEntries(store.dayTotals.map(day => [day.key, day]));
+
+            return (
+              <article className="history-store-roster" key={`roster-${store.name}`}>
+                <div className="history-store-roster-header">
+                  <div>
+                    <strong>{store.name}</strong>
+                    <span>Bản report mới nhất: {formatShortDate(store.latestDate)} · {store.reports.length} report</span>
+                  </div>
+                  <div className="history-store-roster-total">
+                    <strong>{store.rosterTotal}</strong>
+                    <span>lượt ca trong tuần</span>
+                  </div>
+                </div>
+                <div className="history-store-roster-scroll">
+                  <table className="history-weekly-table history-store-roster-table">
+                    <thead>
+                      <tr>
+                        <th>Ca / Ngày</th>
+                        {HISTORY_DAYS.map(day => <th key={day.key}>{day.shortLabel}</th>)}
+                        <th>Tổng</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {HISTORY_SHIFTS.map(shift => (
+                        <tr key={shift.key}>
+                          <th>{shift.label}</th>
+                          {HISTORY_DAYS.map(day => (
+                            <td key={day.key}>{storeDayTotals[day.key][shift.key]}</td>
+                          ))}
+                          <td className="history-week-total">
+                            {HISTORY_DAYS.reduce((sum, day) => sum + storeDayTotals[day.key][shift.key], 0)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="history-day-total-row">
+                        <th>Tổng/ngày</th>
+                        {HISTORY_DAYS.map(day => <td key={day.key}>{storeDayTotals[day.key].total}</td>)}
+                        <td>{store.rosterTotal}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
@@ -721,6 +835,11 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
   const weeklySummaries = useMemo(() => buildWeeklySummaries(reports), [reports]);
   const [selectedWeekKey, setSelectedWeekKey] = useState(weeklySummaries[0]?.key || '');
+  const visibleReports = useMemo(() => (
+    selectedWeekKey
+      ? reports.filter(report => formatDateKey(getWeekStart(getReportDate(report))) === selectedWeekKey)
+      : reports
+  ), [reports, selectedWeekKey]);
 
   useEffect(() => {
     if (weeklySummaries.length > 0 && !weeklySummaries.some(week => week.key === selectedWeekKey)) {
@@ -731,6 +850,10 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
   useEffect(() => {
     if (!focusReportId || !reports.some(report => report.id === focusReportId)) return undefined;
 
+    const focusedReport = reports.find(report => report.id === focusReportId);
+    if (focusedReport) {
+      setSelectedWeekKey(formatDateKey(getWeekStart(getReportDate(focusedReport))));
+    }
     setExpandedReportId(focusReportId);
     const scrollTimer = window.setTimeout(() => {
       document.getElementById(`history-report-${focusReportId}`)?.scrollIntoView({
@@ -795,6 +918,13 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
         />
       )}
 
+      {reports.length > 0 && (
+        <div className="history-report-period">
+          <span>Đang xem kho báo cáo tuần đã chọn</span>
+          <strong>{visibleReports.length} bản báo cáo</strong>
+        </div>
+      )}
+
       {reports.length === 0 ? (
         <div className="lush-card flex flex-col items-center justify-center p-12 text-center space-y-4">
           <div className="w-12 h-12 bg-bg-inset border border-medium rounded-md flex items-center justify-center">
@@ -816,7 +946,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
         </div>
       ) : (
         <div className="space-y-4">
-          {reports.map(report => {
+          {visibleReports.map(report => {
             const isExpanded = expandedReportId === report.id;
             const isCopied = copiedId === report.id;
 
@@ -997,6 +1127,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                         reportTemplate={report.template || 'standard'}
                         todayShifts={report.todayShifts}
                         weeklyShiftsRoster={report.weeklyShiftsRoster}
+                        employeeScheduleRoster={report.employeeScheduleRoster}
                         gradingScores={report.gradingScores}
                         overallComments={report.overallComments}
                       />
