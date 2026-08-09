@@ -444,9 +444,11 @@ const HISTORY_DAYS = [
 ];
 
 const HISTORY_SHIFTS = [
-  { key: 'morning', label: 'Ca sáng' },
-  { key: 'middle', label: 'Ca giữa' },
-  { key: 'afternoon', label: 'Ca chiều' }
+  { key: 'A', label: 'A' },
+  { key: 'B', label: 'B' },
+  { key: 'M', label: 'M' },
+  { key: 'AL', label: 'AL' },
+  { key: 'OFF', label: 'OFF' }
 ];
 
 const getReportDate = (report) => {
@@ -496,6 +498,18 @@ const getRosterValue = (report, shiftKey, dayKey) => {
     : '';
 };
 
+const countScheduleCode = (report, code, dayKey) => {
+  const roster = report.employeeScheduleRoster;
+  if (roster?.employees && roster?.days) {
+    const values = roster.days[dayKey] || {};
+    return roster.employees.filter(employee => values[employee.id] === code).length;
+  }
+
+  const legacyShiftByCode = { A: 'morning', B: 'afternoon', M: 'middle' };
+  const legacyShift = legacyShiftByCode[code];
+  return legacyShift ? countStaff(getRosterValue(report, legacyShift, dayKey)) : 0;
+};
+
 const buildWeeklySummaries = (reports) => {
   const weekMap = new Map();
 
@@ -541,14 +555,19 @@ const buildWeeklySummaries = (reports) => {
     .sort((a, b) => b.start - a.start)
     .map(week => {
       const dayTotals = Object.fromEntries(
-        HISTORY_DAYS.map(day => [day.key, { morning: 0, middle: 0, afternoon: 0 }])
+        HISTORY_DAYS.map(day => [
+          day.key,
+          Object.fromEntries(HISTORY_SHIFTS.map(shift => [shift.key, 0]))
+        ])
       );
 
       Array.from(week.stores.values()).forEach(store => {
         HISTORY_DAYS.forEach(day => {
           HISTORY_SHIFTS.forEach(shift => {
-            dayTotals[day.key][shift.key] += countStaff(
-              getRosterValue(store.latestReport, shift.key, day.key)
+            dayTotals[day.key][shift.key] += countScheduleCode(
+              store.latestReport,
+              shift.key,
+              day.key
             );
           });
         });
@@ -559,7 +578,7 @@ const buildWeeklySummaries = (reports) => {
           ...store,
           rosterTotal: HISTORY_DAYS.reduce((total, day) => (
             total + HISTORY_SHIFTS.reduce((dayTotal, shift) => (
-              dayTotal + countStaff(getRosterValue(store.latestReport, shift.key, day.key))
+              dayTotal + countScheduleCode(store.latestReport, shift.key, day.key)
             ), 0)
           ), 0)
         }))

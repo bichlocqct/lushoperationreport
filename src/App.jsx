@@ -132,6 +132,19 @@ export default function App() {
   
   // Weekly Store Shifts Roster State: { [storeId]: { [shiftKey]: { [day]: '' } } }
   const [weeklyShifts, setWeeklyShifts] = useState({});
+
+  // Employee-first roster: { [storeId]: { employees: [{ id, name }], days: { [day]: { [employeeId]: code } } } }
+  const [employeeRoster, setEmployeeRoster] = useState(() => {
+    const saved = localStorage.getItem('lush_employee_roster');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing employee roster from localStorage', e);
+      }
+    }
+    return {};
+  });
   
   // Reports History
   const [reports, setReports] = useState([]);
@@ -188,6 +201,7 @@ export default function App() {
         console.error('Error parsing weekly shifts from localStorage', e);
       }
     }
+
   }, []);
 
   // Save storesData state to localStorage on modification
@@ -204,6 +218,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('lush_weekly_shifts', JSON.stringify(weeklyShifts));
   }, [weeklyShifts]);
+
+  useEffect(() => {
+    localStorage.setItem('lush_employee_roster', JSON.stringify(employeeRoster));
+  }, [employeeRoster]);
 
   const handleSaveReport = (newReport, options = {}) => {
     const updatedReports = [newReport, ...reports];
@@ -480,6 +498,8 @@ export default function App() {
               setSelectedStoreId={setSelectedStoreId}
               weeklyShifts={weeklyShifts}
               setWeeklyShifts={setWeeklyShifts}
+              employeeRoster={employeeRoster}
+              setEmployeeRoster={setEmployeeRoster}
             />
           )}
 
@@ -531,6 +551,7 @@ export default function App() {
         gradingScores={gradingScores}
         overallComments={overallComments}
         weeklyShifts={weeklyShifts}
+        employeeRoster={employeeRoster}
         onSaveReport={handleSaveReport}
       />
     </div>

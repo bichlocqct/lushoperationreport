@@ -31,6 +31,14 @@ const SHIFT_ROWS = [
   { key: 'afternoon', label: 'Ca chiều', note: 'Bàn giao & đóng ca', tone: 'afternoon', number: '03' }
 ];
 
+const SHIFT_CODES = [
+  { code: 'A', label: 'Ca sáng', tone: 'a' },
+  { code: 'B', label: 'Ca chiều', tone: 'b' },
+  { code: 'M', label: 'Ca giữa', tone: 'm' },
+  { code: 'AL', label: 'Nghỉ phép', tone: 'al' },
+  { code: 'OFF', label: 'Nghỉ', tone: 'off' }
+];
+
 const BREAK_RULES = [
   { title: 'Ca sáng', time: '12h – 12h30', detail: '1 nhân sự ca sáng' },
   { title: 'Ca giữa', time: '13h30 – 14h', detail: '1 nhân sự ca giữa' },
@@ -56,6 +64,56 @@ function HandoverChip({ value }) {
     </div>
   );
 }
+
+const getEmployeeId = (name, index) => {
+  const slug = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'nhan-vien';
+
+  return `legacy-${index}-${slug}`;
+};
+
+const migrateLegacyRoster = (legacyRoster = {}) => {
+  const names = [];
+
+  SHIFT_ROWS.forEach(shift => {
+    Object.values(legacyRoster[shift.key] || {}).forEach(value => {
+      String(value || '')
+        .split(';;')
+        .map(name => name.trim())
+        .filter(Boolean)
+        .forEach(name => {
+          if (!names.includes(name)) names.push(name);
+        });
+    });
+  });
+
+  const employees = names.map((name, index) => ({ id: getEmployeeId(name, index), name }));
+  const employeeIds = new Map(employees.map(employee => [employee.name, employee.id]));
+  const legacyCodeByShift = { morning: 'A', middle: 'M', afternoon: 'B' };
+  const days = {};
+
+  SHIFT_ROWS.forEach(shift => {
+    DAYS.forEach(day => {
+      const namesForDay = String(legacyRoster[shift.key]?.[day.key] || '')
+        .split(';;')
+        .map(name => name.trim())
+        .filter(Boolean);
+
+      if (namesForDay.length === 0) return;
+      days[day.key] = { ...(days[day.key] || {}) };
+      namesForDay.forEach(name => {
+        const employeeId = employeeIds.get(name);
+        if (employeeId) days[day.key][employeeId] = legacyCodeByShift[shift.key];
+      });
+    });
+  });
+
+  return { employees, days };
+};
 
 function DirectoryTable({ stores, scheduleKey, title }) {
   return (
@@ -103,7 +161,9 @@ export default function ShiftsTab({
   selectedStoreId,
   setSelectedStoreId,
   weeklyShifts = {},
-  setWeeklyShifts
+  setWeeklyShifts,
+  employeeRoster = {},
+  setEmployeeRoster
 }) {
   const selectedStore = STORES.find(store => store.id === selectedStoreId) || STORES[0];
   const [activeRegion, setActiveRegion] = useState(selectedStore.region);
@@ -117,16 +177,22 @@ export default function ShiftsTab({
     [activeRegion]
   );
 
-  const scheduleStats = useMemo(() => {
-    const assigned = SHIFT_ROWS.reduce((total, shift) => {
-      return total + DAYS.reduce((dayTotal, day) => {
-        const value = weeklyShifts[selectedStoreId]?.[shift.key]?.[day.key] || '';
-        return dayTotal + value.split(';;').filter(name => name.trim()).length;
-      }, 0);
-    }, 0);
+  const legacyRoster = useMemo(
+    () => migrateLegacyRoster(weeklyShifts[selectedStoreId] || {}),
+    [selectedStoreId, weeklyShifts]
+  );
 
-    return { assigned, shiftCount: SHIFT_ROWS.length, dayCount: DAYS.length };
-  }, [selectedStoreId, weeklyShifts]);
+  const activeEmployeeRoster = employeeRoster[selectedStoreId] || legacyRoster;
+  const employees = activeEmployeeRoster.employees || [];
+  const rosterDays = activeEmployeeRoster.days || {};
+
+  const scheduleStats = {
+    assigned: DAYS.reduce((total, day) => (
+      total + employees.filter(employee => rosterDays[day.key]?.[employee.id]).length
+    ), 0),
+    employeeCount: employees.length,
+    dayCount: DAYS.length
+  };
 
   const handleRegionChange = (region) => {
     setActiveRegion(region);
@@ -134,19 +200,79 @@ export default function ShiftsTab({
     if (regionalStores.length > 0) setSelectedStoreId(regionalStores[0].id);
   };
 
-  const updateShiftState = (shiftKey, dayKey, value) => {
-    setWeeklyShifts(prev => {
-      const storeData = prev[selectedStoreId] || {};
-      const shiftData = storeData[shiftKey] || {};
-
+  const updateEmployeeRoster = updater => {
+    setEmployeeRoster(prev => {
+      const current = prev[selectedStoreId] || activeEmployeeRoster;
       return {
         ...prev,
-        [selectedStoreId]: {
-          ...storeData,
-          [shiftKey]: { ...shiftData, [dayKey]: value }
-        }
+        [selectedStoreId]: updater(current)
       };
     });
+  };
+
+  const addEmployee = () => {
+    const employeeNumber = employees.length + 1;
+    updateEmployeeRoster(current => ({
+      ...current,
+      employees: [
+        ...(current.employees || []),
+        { id: `employee-${Date.now()}`, name: `Nhân sự ${employeeNumber}` }
+      ]
+    }));
+  };
+
+  const updateEmployeeName = (employeeId, name) => {
+    updateEmployeeRoster(current => ({
+      ...current,
+      employees: (current.employees || []).map(employee => (
+        employee.id === employeeId ? { ...employee, name } : employee
+      ))
+    }));
+  };
+
+  const removeEmployee = employeeId => {
+    updateEmployeeRoster(current => {
+      const nextDays = Object.fromEntries(
+        Object.entries(current.days || {}).map(([dayKey, dayValues]) => {
+          const remaining = { ...dayValues };
+          delete remaining[employeeId];
+          return [dayKey, remaining];
+        })
+      );
+
+      return {
+        ...current,
+        employees: (current.employees || []).filter(employee => employee.id !== employeeId),
+        days: nextDays
+      };
+    });
+  };
+
+  const updateEmployeeCode = (dayKey, employeeId, code) => {
+    updateEmployeeRoster(current => ({
+      ...current,
+      days: {
+        ...(current.days || {}),
+        [dayKey]: {
+          ...(current.days?.[dayKey] || {}),
+          [employeeId]: code
+        }
+      }
+    }));
+  };
+
+  // Keep the previous roster shape readable for saved reports created before the matrix update.
+  const updateShiftState = (shiftKey, dayKey, value) => {
+    setWeeklyShifts(prev => ({
+      ...prev,
+      [selectedStoreId]: {
+        ...(prev[selectedStoreId] || {}),
+        [shiftKey]: {
+          ...(prev[selectedStoreId]?.[shiftKey] || {}),
+          [dayKey]: value
+        }
+      }
+    }));
   };
 
   const getShiftNames = (shiftKey, dayKey) => {
@@ -165,15 +291,17 @@ export default function ShiftsTab({
   };
 
   const removeName = (shiftKey, dayKey, index, names) => {
-    updateShiftState(
-      shiftKey,
-      dayKey,
-      names.filter((_, nameIndex) => nameIndex !== index).join(';;')
-    );
+    updateShiftState(shiftKey, dayKey, names.filter((_, nameIndex) => nameIndex !== index).join(';;'));
   };
 
-  const handleResetWeeklyShifts = () => {
+  const handleResetEmployeeRoster = () => {
     if (!window.confirm('Đặt lại toàn bộ bảng phân ca của cửa hàng này?')) return;
+
+    setEmployeeRoster(prev => {
+      const next = { ...prev };
+      delete next[selectedStoreId];
+      return next;
+    });
 
     setWeeklyShifts(prev => {
       const next = { ...prev };
@@ -274,19 +402,25 @@ export default function ShiftsTab({
             <div>
               <span className="shift-eyebrow">Lịch tuần / {selectedStore.name}</span>
               <h2>Bảng phân ca làm việc</h2>
-              <p>Nhập tên nhân sự vào từng ngày. Khung giờ và thời gian giao ca được tự động hiển thị.</p>
+              <p>Mỗi cột là một nhân viên, mỗi hàng là một ngày. Chọn mã A, B, M, AL hoặc OFF cho từng ô.</p>
             </div>
           </div>
-          <button type="button" onClick={handleResetWeeklyShifts} className="shift-reset-button">
-            <RotateCcw size={14} />
-            <span>Đặt lại lịch</span>
-          </button>
+          <div className="shift-roster-actions">
+            <button type="button" onClick={addEmployee} className="shift-add-employee-button">
+              <Plus size={15} />
+              <span>Thêm nhân viên</span>
+            </button>
+            <button type="button" onClick={handleResetEmployeeRoster} className="shift-reset-button">
+              <RotateCcw size={14} />
+              <span>Đặt lại lịch</span>
+            </button>
+          </div>
         </div>
 
         <div className="shift-roster-toolbar">
           <div className="shift-toolbar-note">
             <Info size={15} />
-            <span>Mỗi ô có thể thêm nhiều nhân sự. Nhấn <strong>Thêm nhân sự</strong> khi cần bổ sung.</span>
+            <span>Thêm tên nhân viên ở hàng tiêu đề, sau đó chọn mã ca trực tiếp trong từng ngày.</span>
           </div>
           <div className="shift-toolbar-status">
             <CheckCircle2 size={15} />
@@ -294,7 +428,86 @@ export default function ShiftsTab({
           </div>
         </div>
 
-        <div className="shift-table-scroll">
+        <div className="shift-employee-table-scroll">
+          <table className="shift-employee-table">
+            <thead>
+              <tr>
+                <th className="shift-employee-day-header">Ngày trong tuần</th>
+                {employees.map(employee => (
+                  <th key={employee.id} className="shift-employee-name-header">
+                    <div className="shift-employee-name-wrap">
+                      <UsersRound size={15} aria-hidden="true" />
+                      <input
+                        type="text"
+                        value={employee.name}
+                        onChange={event => updateEmployeeName(employee.id, event.target.value)}
+                        aria-label={`Tên nhân viên ${employee.name}`}
+                        className="shift-employee-name-input"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeEmployee(employee.id)}
+                        className="shift-employee-remove"
+                        aria-label={`Xóa ${employee.name}`}
+                        title="Xóa nhân viên"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </th>
+                ))}
+                {employees.length === 0 && (
+                  <th className="shift-employee-empty-header">Chưa có nhân viên</th>
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {DAYS.map(day => (
+                <tr key={day.key}>
+                  <th className={`shift-employee-day-cell ${day.isWeekend ? 'is-weekend' : ''}`}>
+                    <span>{day.shortLabel}</span>
+                    <strong>{day.label}</strong>
+                  </th>
+                  {employees.map(employee => {
+                    const code = rosterDays[day.key]?.[employee.id] || '';
+                    const codeTone = SHIFT_CODES.find(option => option.code === code)?.tone || 'empty';
+
+                    return (
+                      <td key={employee.id} className={`shift-employee-code-cell code-${codeTone}`}>
+                        <select
+                          value={code}
+                          onChange={event => updateEmployeeCode(day.key, employee.id, event.target.value)}
+                          className="shift-code-select"
+                          aria-label={`${day.label}, ${employee.name}`}
+                        >
+                          <option value="">Chọn mã</option>
+                          {SHIFT_CODES.map(option => (
+                            <option key={option.code} value={option.code}>{option.code}</option>
+                          ))}
+                        </select>
+                      </td>
+                    );
+                  })}
+                  {employees.length === 0 && (
+                    <td className="shift-employee-empty-cell">Nhấn “Thêm nhân viên” để bắt đầu xếp lịch.</td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="shift-code-legend" aria-label="Chú giải mã ca">
+          <span className="shift-code-legend-label">Mã ca:</span>
+          {SHIFT_CODES.map(option => (
+            <span key={option.code} className={`shift-code-badge code-${option.tone}`}>
+              <strong>{option.code}</strong>
+              <small>{option.label}</small>
+            </span>
+          ))}
+        </div>
+
+        <div className="legacy-shift-table-scroll">
           <table className="shift-roster-table">
             <thead>
               <tr>

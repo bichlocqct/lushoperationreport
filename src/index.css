@@ -2972,6 +2972,294 @@ ul.space-y-3 li {
   }
 }
 
+/* Employee-first weekly roster */
+.shift-roster-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: flex-end;
+}
+
+.shift-add-employee-button,
+.shift-reset-button {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.shift-add-employee-button {
+  background: #e5f0e8;
+  border: 1px solid #c8dacb;
+  border-radius: 9px;
+  color: #31513b;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 850;
+  padding: 0.58rem 0.78rem;
+}
+
+.shift-add-employee-button:hover {
+  background: #d8e9dc;
+  border-color: #abc8b1;
+}
+
+.legacy-shift-table-scroll {
+  display: none;
+}
+
+.shift-employee-table-scroll {
+  border: 1px solid #dbe5dc;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.shift-employee-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 760px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.shift-employee-table th,
+.shift-employee-table td {
+  border-bottom: 1px solid #e4ebe5;
+  border-right: 1px solid #e4ebe5;
+  padding: 0.65rem;
+}
+
+.shift-employee-table tr:last-child th,
+.shift-employee-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.shift-employee-table th:last-child,
+.shift-employee-table td:last-child {
+  border-right: 0;
+}
+
+.shift-employee-day-header {
+  background: #1b211d;
+  color: #ffffff;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  min-width: 145px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.shift-employee-name-header {
+  background: #1b211d;
+  min-width: 145px;
+  padding: 0.55rem !important;
+  vertical-align: top;
+}
+
+.shift-employee-name-wrap {
+  align-items: center;
+  color: #d4e2d6;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.shift-employee-name-input {
+  background: #27342b;
+  border: 1px solid #55715b;
+  border-radius: 7px;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  min-width: 0;
+  padding: 0.55rem 0.48rem;
+  width: 100%;
+}
+
+.shift-employee-name-input:focus {
+  border-color: #b8d3bc;
+  box-shadow: 0 0 0 2px rgba(184, 211, 188, 0.18);
+  outline: 0;
+}
+
+.shift-employee-remove {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #b7c9b9;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.shift-employee-remove:hover {
+  background: #3b2929;
+  color: #f2b4b4;
+}
+
+.shift-employee-empty-header {
+  background: #1b211d;
+  color: #b7c9b9;
+  font-size: 0.66rem;
+  min-width: 250px;
+  text-align: left;
+}
+
+.shift-employee-day-cell {
+  background: #f6f9f6;
+  color: #23382a;
+  text-align: left;
+  width: 145px;
+}
+
+.shift-employee-day-cell span,
+.shift-employee-day-cell strong {
+  display: block;
+}
+
+.shift-employee-day-cell span {
+  color: #78917c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.6rem;
+  font-weight: 900;
+  margin-bottom: 0.18rem;
+}
+
+.shift-employee-day-cell strong {
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.shift-employee-day-cell.is-weekend {
+  background: #edf4ef;
+}
+
+.shift-employee-code-cell {
+  background: #ffffff;
+  padding: 0.55rem !important;
+}
+
+.shift-code-select {
+  appearance: auto;
+  background: #f7faf7;
+  border: 1px solid #cbdacf;
+  border-radius: 8px;
+  color: #49604e;
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 900;
+  min-height: 42px;
+  padding: 0.55rem 0.45rem;
+  text-align: center;
+  width: 100%;
+}
+
+.shift-code-select:focus {
+  border-color: #789c7d;
+  box-shadow: 0 0 0 3px rgba(120, 156, 125, 0.16);
+  outline: 0;
+}
+
+.shift-employee-code-cell.code-a .shift-code-select,
+.shift-code-badge.code-a {
+  background: #e6f3e8;
+  border-color: #a8c9ad;
+  color: #2b6638;
+}
+
+.shift-employee-code-cell.code-b .shift-code-select,
+.shift-code-badge.code-b {
+  background: #e9eff9;
+  border-color: #b5c8e2;
+  color: #355b8c;
+}
+
+.shift-employee-code-cell.code-m .shift-code-select,
+.shift-code-badge.code-m {
+  background: #fbf1dc;
+  border-color: #e4c98f;
+  color: #866019;
+}
+
+.shift-employee-code-cell.code-al .shift-code-select,
+.shift-code-badge.code-al {
+  background: #f7e7e7;
+  border-color: #dfbaba;
+  color: #8a4d4d;
+}
+
+.shift-employee-code-cell.code-off .shift-code-select,
+.shift-code-badge.code-off {
+  background: #eef0ef;
+  border-color: #d1d8d3;
+  color: #66726a;
+}
+
+.shift-employee-empty-cell {
+  background: #fbfcfb;
+  color: #849188;
+  font-size: 0.68rem;
+  font-style: italic;
+  min-width: 250px;
+  text-align: center;
+}
+
+.shift-code-legend {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.85rem 0.15rem 0.1rem;
+}
+
+.shift-code-legend-label {
+  color: #748279;
+  font-size: 0.62rem;
+  font-weight: 850;
+  margin-right: 0.15rem;
+  text-transform: uppercase;
+}
+
+.shift-code-badge {
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 0.3rem;
+  padding: 0.32rem 0.55rem;
+}
+
+.shift-code-badge strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.65rem;
+}
+
+.shift-code-badge small {
+  font-size: 0.58rem;
+  font-weight: 750;
+}
+
+@media (max-width: 640px) {
+  .shift-roster-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .shift-add-employee-button,
+  .shift-reset-button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .shift-employee-table {
+    min-width: 680px;
+  }
+}
+
 /* --- Weekly report history summary --- */
 .history-summary-panel {
   --history-ink: #1a211c;

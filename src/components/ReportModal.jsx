@@ -438,6 +438,7 @@ export default function ReportModal({
   gradingScores = {},
   overallComments = '',
   weeklyShifts = {},
+  employeeRoster = {},
   onSaveReport
 }) {
   const [reportTemplate, setReportTemplate] = useState('standard'); // 'standard' | 'compact'
@@ -480,7 +481,19 @@ export default function ReportModal({
     todayDayKey
   );
 
+  const employeeScheduleRoster = employeeRoster[activeStore.id] || null;
+
   const getShiftStaff = (shiftKey) => {
+    const codeByShift = { morning: 'A', middle: 'M', afternoon: 'B' };
+    if (employeeScheduleRoster) {
+      const code = codeByShift[shiftKey];
+      return (employeeScheduleRoster.employees || [])
+        .filter(employee => employeeScheduleRoster.days?.[todayDayKey]?.[employee.id] === code)
+        .map(employee => employee.name)
+        .filter(Boolean)
+        .join(', ');
+    }
+
     const storeShifts = weeklyShifts[activeStore.id] || {};
     const val = storeShifts[shiftKey]?.[todayDayKey] || '';
     if (!val) return '';
@@ -541,7 +554,8 @@ export default function ReportModal({
     gradingScores,
     overallComments,
     todayShifts,
-    weeklyShiftsRoster
+    weeklyShiftsRoster,
+    employeeScheduleRoster
   };
 
   // Generate Report Text
@@ -605,6 +619,30 @@ export default function ReportModal({
         } else {
           text += `• *${d.label}:* Nghỉ\n`;
         }
+      });
+      text += `\n`;
+    }
+
+    if (employeeScheduleRoster) {
+      text += `📅 *LỊCH NHÂN VIÊN THEO MÃ CA (EMPLOYEE ROSTER):*\n`;
+      const employeeDays = [
+        { key: 'monday', label: 'Thứ 2' },
+        { key: 'tuesday', label: 'Thứ 3' },
+        { key: 'wednesday', label: 'Thứ 4' },
+        { key: 'thursday', label: 'Thứ 5' },
+        { key: 'friday', label: 'Thứ 6' },
+        { key: 'saturday', label: 'Thứ 7' },
+        { key: 'sunday', label: 'Chủ Nhật' }
+      ];
+
+      employeeDays.forEach(day => {
+        const assignments = (employeeScheduleRoster.employees || [])
+          .map(employee => {
+            const code = employeeScheduleRoster.days?.[day.key]?.[employee.id];
+            return code ? `${employee.name}: ${code}` : '';
+          })
+          .filter(Boolean);
+        text += `• *${day.label}:* ${assignments.length ? assignments.join(' | ') : 'Chưa xếp'}\n`;
       });
       text += `\n`;
     }
@@ -743,7 +781,8 @@ export default function ReportModal({
       rawText: generateReportText(),
       fileName,
       todayShifts,
-      weeklyShiftsRoster
+      weeklyShiftsRoster,
+      employeeScheduleRoster
     };
 
     const htmlContent = generateReportHTML(reportData, reportTemplate);
