@@ -3260,6 +3260,111 @@ ul.space-y-3 li {
   }
 }
 
+/* Roster orientation: employees on rows, weekdays on columns */
+.shift-employee-table {
+  min-width: 940px;
+}
+
+.shift-employee-name-column-header {
+  background: #1b211d;
+  color: #ffffff;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  min-width: 220px;
+  text-align: left;
+  text-transform: uppercase;
+  width: 220px;
+}
+
+.shift-employee-day-header {
+  background: #1b211d;
+  color: #ffffff;
+  min-width: 100px;
+  padding: 0.6rem 0.45rem !important;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.shift-employee-day-header.is-weekend {
+  background: #263b2d;
+}
+
+.shift-employee-day-header span,
+.shift-employee-day-header strong,
+.shift-employee-day-header small {
+  display: block;
+}
+
+.shift-employee-day-header span {
+  color: #b8cabe;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  margin-bottom: 0.15rem;
+}
+
+.shift-employee-day-header strong {
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 900;
+}
+
+.shift-employee-day-header small {
+  color: #a5b7a9;
+  font-size: 0.52rem;
+  margin-top: 0.16rem;
+}
+
+.shift-employee-name-cell {
+  background: #f6f9f6;
+  min-width: 220px;
+  padding: 0.55rem 0.65rem !important;
+  vertical-align: middle;
+  width: 220px;
+}
+
+.shift-employee-name-cell .shift-employee-name-wrap {
+  color: #68806d;
+}
+
+.shift-employee-name-cell .shift-employee-name-input {
+  background: #ffffff;
+  border-color: #cbdacf;
+  color: #263d2c;
+  font-size: 0.7rem;
+  min-height: 39px;
+}
+
+.shift-employee-name-cell .shift-employee-name-input:focus {
+  border-color: #789c7d;
+  box-shadow: 0 0 0 2px rgba(120, 156, 125, 0.16);
+}
+
+.shift-employee-name-cell .shift-employee-remove {
+  color: #829286;
+}
+
+.shift-employee-name-cell .shift-employee-remove:hover {
+  background: #f4e4e4;
+  color: #8a4d4d;
+}
+
+@media (max-width: 640px) {
+  .shift-employee-table {
+    min-width: 900px;
+  }
+
+  .shift-employee-name-column-header,
+  .shift-employee-name-cell {
+    min-width: 185px;
+    width: 185px;
+  }
+
+  .shift-employee-day-header {
+    min-width: 88px;
+  }
+}
+
 /* --- Weekly report history summary --- */
 .history-summary-panel {
   --history-ink: #1a211c;

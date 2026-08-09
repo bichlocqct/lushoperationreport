@@ -35,8 +35,8 @@ const SHIFT_CODES = [
   { code: 'A', label: 'Ca sáng', tone: 'a' },
   { code: 'B', label: 'Ca chiều', tone: 'b' },
   { code: 'M', label: 'Ca giữa', tone: 'm' },
-  { code: 'AL', label: 'Nghỉ phép', tone: 'al' },
-  { code: 'OFF', label: 'Nghỉ', tone: 'off' }
+  { code: 'OFF', label: 'Nghỉ', tone: 'off' },
+  { code: 'AL', label: 'Nghỉ phép', tone: 'al' }
 ];
 
 const BREAK_RULES = [
@@ -420,7 +420,7 @@ export default function ShiftsTab({
         <div className="shift-roster-toolbar">
           <div className="shift-toolbar-note">
             <Info size={15} />
-            <span>Thêm tên nhân viên ở hàng tiêu đề, sau đó chọn mã ca trực tiếp trong từng ngày.</span>
+            <span>Mỗi hàng là một nhân viên, mỗi cột là một ngày; chọn mã ca trực tiếp trong từng ô.</span>
           </div>
           <div className="shift-toolbar-status">
             <CheckCircle2 size={15} />
@@ -432,9 +432,20 @@ export default function ShiftsTab({
           <table className="shift-employee-table">
             <thead>
               <tr>
-                <th className="shift-employee-day-header">Ngày trong tuần</th>
-                {employees.map(employee => (
-                  <th key={employee.id} className="shift-employee-name-header">
+                <th className="shift-employee-name-column-header">Nhân viên</th>
+                {DAYS.map(day => (
+                  <th key={day.key} className={`shift-employee-day-header ${day.isWeekend ? 'is-weekend' : ''}`}>
+                    <span>{day.shortLabel}</span>
+                    <strong>{day.label}</strong>
+                    {day.isWeekend && <small>Cuối tuần</small>}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {employees.length > 0 ? employees.map(employee => (
+                <tr key={employee.id}>
+                  <th className="shift-employee-name-cell">
                     <div className="shift-employee-name-wrap">
                       <UsersRound size={15} aria-hidden="true" />
                       <input
@@ -455,25 +466,12 @@ export default function ShiftsTab({
                       </button>
                     </div>
                   </th>
-                ))}
-                {employees.length === 0 && (
-                  <th className="shift-employee-empty-header">Chưa có nhân viên</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {DAYS.map(day => (
-                <tr key={day.key}>
-                  <th className={`shift-employee-day-cell ${day.isWeekend ? 'is-weekend' : ''}`}>
-                    <span>{day.shortLabel}</span>
-                    <strong>{day.label}</strong>
-                  </th>
-                  {employees.map(employee => {
+                  {DAYS.map(day => {
                     const code = rosterDays[day.key]?.[employee.id] || '';
                     const codeTone = SHIFT_CODES.find(option => option.code === code)?.tone || 'empty';
 
                     return (
-                      <td key={employee.id} className={`shift-employee-code-cell code-${codeTone}`}>
+                      <td key={day.key} className={`shift-employee-code-cell code-${codeTone}`}>
                         <select
                           value={code}
                           onChange={event => updateEmployeeCode(day.key, employee.id, event.target.value)}
@@ -488,11 +486,14 @@ export default function ShiftsTab({
                       </td>
                     );
                   })}
-                  {employees.length === 0 && (
-                    <td className="shift-employee-empty-cell">Nhấn “Thêm nhân viên” để bắt đầu xếp lịch.</td>
-                  )}
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td className="shift-employee-empty-cell" colSpan={DAYS.length + 1}>
+                    Nhấn “Thêm nhân viên” để bắt đầu xếp lịch.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -447,8 +447,8 @@ const HISTORY_SHIFTS = [
   { key: 'A', label: 'A' },
   { key: 'B', label: 'B' },
   { key: 'M', label: 'M' },
-  { key: 'AL', label: 'AL' },
-  { key: 'OFF', label: 'OFF' }
+  { key: 'OFF', label: 'OFF' },
+  { key: 'AL', label: 'AL' }
 ];
 
 const getReportDate = (report) => {
