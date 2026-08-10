@@ -55,6 +55,12 @@ const FormPreview = ({
     if (!val) return '--';
     return val.split(';;').filter(name => name.trim() !== '').join(', ');
   };
+
+  const formatEmployeeScheduleValue = value => {
+    if (!value) return '--';
+    const displayValue = String(value);
+    return displayValue.startsWith('OTHER:') ? `Khác: ${displayValue.slice(6) || '--'}` : displayValue;
+  };
   
   return (
     <div style={{
@@ -174,6 +180,7 @@ const FormPreview = ({
               <thead>
                 <tr style={{ backgroundColor: '#f4f4f5' }}>
                   <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'left' }}>Nhân viên</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center' }}>Vị trí</th>
                   {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'].map(day => (
                     <th key={day} style={{ border: '1px solid #000000', padding: '4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center' }}>{day}</th>
                   ))}
@@ -183,9 +190,10 @@ const FormPreview = ({
                 {employeeScheduleRoster.employees.map(employee => (
                   <tr key={employee.id}>
                     <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>{employee.name || '--'}</td>
+                    <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{employee.position || '--'}</td>
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(dayKey => (
                       <td key={dayKey} style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>
-                        {employeeScheduleRoster.days?.[dayKey]?.[employee.id] || '--'}
+                        {formatEmployeeScheduleValue(employeeScheduleRoster.days?.[dayKey]?.[employee.id])}
                       </td>
                     ))}
                   </tr>
@@ -479,7 +487,8 @@ const HISTORY_SHIFTS = [
   { key: 'B', label: 'B' },
   { key: 'M', label: 'M' },
   { key: 'OFF', label: 'OFF' },
-  { key: 'AL', label: 'AL' }
+  { key: 'AL', label: 'AL' },
+  { key: 'OTHER', label: 'Khác' }
 ];
 
 const getReportDate = (report) => {
@@ -529,11 +538,15 @@ const getRosterValue = (report, shiftKey, dayKey) => {
     : '';
 };
 
+const getScheduleCode = value => (
+  typeof value === 'string' && value.startsWith('OTHER:') ? 'OTHER' : value
+);
+
 const countScheduleCode = (report, code, dayKey) => {
   const roster = report.employeeScheduleRoster;
   if (roster?.employees && roster?.days) {
     const values = roster.days[dayKey] || {};
-    return roster.employees.filter(employee => values[employee.id] === code).length;
+    return roster.employees.filter(employee => getScheduleCode(values[employee.id]) === code).length;
   }
 
   const legacyShiftByCode = { A: 'morning', B: 'afternoon', M: 'middle' };

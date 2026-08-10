@@ -3994,6 +3994,81 @@ ul.space-y-3 li {
   display: none !important;
 }
 
+/* Employee roster: position column and custom shift entry */
+.shift-employee-table {
+  min-width: 1050px;
+}
+
+.shift-employee-position-header {
+  background: #1b211d;
+  color: #ffffff;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  min-width: 92px;
+  text-align: center;
+  text-transform: uppercase;
+  width: 92px;
+}
+
+.shift-employee-position-cell {
+  background: #f6f9f6;
+  padding: 0.55rem 0.45rem !important;
+  width: 92px;
+}
+
+.shift-position-select {
+  background: #ffffff;
+  border: 1px solid #cbdacf;
+  border-radius: 7px;
+  color: #36533f;
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.66rem;
+  font-weight: 900;
+  min-height: 39px;
+  padding: 0.45rem 0.25rem;
+  text-align: center;
+  width: 100%;
+}
+
+.shift-position-select:focus,
+.shift-other-input:focus {
+  border-color: #789c7d;
+  box-shadow: 0 0 0 2px rgba(120, 156, 125, 0.16);
+  outline: 0;
+}
+
+.shift-employee-code-cell.code-other .shift-code-select,
+.shift-code-badge.code-other {
+  background: #f5f0e4;
+  border-color: #dbcba8;
+  color: #715a2d;
+}
+
+.shift-other-input {
+  background: #ffffff;
+  border: 1px solid #dbcba8;
+  border-radius: 7px;
+  color: #715a2d;
+  font-size: 0.62rem;
+  margin-top: 0.4rem;
+  min-height: 32px;
+  padding: 0.4rem 0.45rem;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .shift-employee-table {
+    min-width: 1010px;
+  }
+
+  .shift-employee-position-header,
+  .shift-employee-position-cell {
+    min-width: 84px;
+    width: 84px;
+  }
+}
+
 
 
 

@@ -36,8 +36,11 @@ const SHIFT_CODES = [
   { code: 'B', label: 'Ca chiều', tone: 'b' },
   { code: 'M', label: 'Ca giữa', tone: 'm' },
   { code: 'OFF', label: 'Nghỉ', tone: 'off' },
-  { code: 'AL', label: 'Nghỉ phép', tone: 'al' }
+  { code: 'AL', label: 'Nghỉ phép', tone: 'al' },
+  { code: 'OTHER', label: 'Khác', tone: 'other' }
 ];
+
+const POSITION_CODES = ['SM', 'SUP', 'SA', 'PT'];
 
 const BREAK_RULES = [
   { title: 'Ca sáng', time: '12h – 12h30', detail: '1 nhân sự ca sáng' },
@@ -91,7 +94,7 @@ const migrateLegacyRoster = (legacyRoster = {}) => {
     });
   });
 
-  const employees = names.map((name, index) => ({ id: getEmployeeId(name, index), name }));
+  const employees = names.map((name, index) => ({ id: getEmployeeId(name, index), name, position: '' }));
   const employeeIds = new Map(employees.map(employee => [employee.name, employee.id]));
   const legacyCodeByShift = { morning: 'A', middle: 'M', afternoon: 'B' };
   const days = {};
@@ -216,7 +219,7 @@ export default function ShiftsTab({
       ...current,
       employees: [
         ...(current.employees || []),
-        { id: `employee-${Date.now()}`, name: `Nhân sự ${employeeNumber}` }
+        { id: `employee-${Date.now()}`, name: `Nhân sự ${employeeNumber}`, position: '' }
       ]
     }));
   };
@@ -226,6 +229,15 @@ export default function ShiftsTab({
       ...current,
       employees: (current.employees || []).map(employee => (
         employee.id === employeeId ? { ...employee, name } : employee
+      ))
+    }));
+  };
+
+  const updateEmployeePosition = (employeeId, position) => {
+    updateEmployeeRoster(current => ({
+      ...current,
+      employees: (current.employees || []).map(employee => (
+        employee.id === employeeId ? { ...employee, position } : employee
       ))
     }));
   };
@@ -249,13 +261,14 @@ export default function ShiftsTab({
   };
 
   const updateEmployeeCode = (dayKey, employeeId, code) => {
+    const storedCode = code === 'OTHER' ? 'OTHER:' : code;
     updateEmployeeRoster(current => ({
       ...current,
       days: {
         ...(current.days || {}),
         [dayKey]: {
           ...(current.days?.[dayKey] || {}),
-          [employeeId]: code
+          [employeeId]: storedCode
         }
       }
     }));
@@ -433,6 +446,7 @@ export default function ShiftsTab({
             <thead>
               <tr>
                 <th className="shift-employee-name-column-header">Nhân viên</th>
+                <th className="shift-employee-position-header">Vị trí</th>
                 {DAYS.map(day => (
                   <th key={day.key} className={`shift-employee-day-header ${day.isWeekend ? 'is-weekend' : ''}`}>
                     <span>{day.shortLabel}</span>
@@ -466,8 +480,23 @@ export default function ShiftsTab({
                       </button>
                     </div>
                   </th>
+                  <td className="shift-employee-position-cell">
+                    <select
+                      value={employee.position || ''}
+                      onChange={event => updateEmployeePosition(employee.id, event.target.value)}
+                      className="shift-position-select"
+                      aria-label={`Vị trí của ${employee.name}`}
+                    >
+                      <option value="">Chọn</option>
+                      {POSITION_CODES.map(position => (
+                        <option key={position} value={position}>{position}</option>
+                      ))}
+                    </select>
+                  </td>
                   {DAYS.map(day => {
-                    const code = rosterDays[day.key]?.[employee.id] || '';
+                    const storedCode = String(rosterDays[day.key]?.[employee.id] || '');
+                    const code = storedCode === 'OTHER' || storedCode.startsWith('OTHER:') ? 'OTHER' : storedCode;
+                    const otherShift = storedCode.startsWith('OTHER:') ? storedCode.slice(6) : '';
                     const codeTone = SHIFT_CODES.find(option => option.code === code)?.tone || 'empty';
 
                     return (
@@ -480,16 +509,26 @@ export default function ShiftsTab({
                         >
                           <option value="">Chọn mã</option>
                           {SHIFT_CODES.map(option => (
-                            <option key={option.code} value={option.code}>{option.code}</option>
+                            <option key={option.code} value={option.code}>{option.code === 'OTHER' ? 'Khác' : option.code}</option>
                           ))}
                         </select>
+                        {code === 'OTHER' && (
+                          <input
+                            type="text"
+                            value={otherShift}
+                            onChange={event => updateEmployeeCode(day.key, employee.id, `OTHER:${event.target.value}`)}
+                            className="shift-other-input"
+                            placeholder="Điền ca khác"
+                            aria-label={`Nội dung ca khác, ${day.label}, ${employee.name}`}
+                          />
+                        )}
                       </td>
                     );
                   })}
                 </tr>
               )) : (
                 <tr>
-                  <td className="shift-employee-empty-cell" colSpan={DAYS.length + 1}>
+                  <td className="shift-employee-empty-cell" colSpan={DAYS.length + 2}>
                     Nhấn “Thêm nhân viên” để bắt đầu xếp lịch.
                   </td>
                 </tr>
@@ -502,7 +541,7 @@ export default function ShiftsTab({
           <span className="shift-code-legend-label">Mã ca:</span>
           {SHIFT_CODES.map(option => (
             <span key={option.code} className={`shift-code-badge code-${option.tone}`}>
-              <strong>{option.code}</strong>
+              <strong>{option.code === 'OTHER' ? 'Khác' : option.code}</strong>
               <small>{option.label}</small>
             </span>
           ))}

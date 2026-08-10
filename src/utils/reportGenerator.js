@@ -169,12 +169,16 @@ export function generateReportHTML(reportData, template = 'standard') {
     const getEmployeeCode = (employeeId, dayKey) => (
       employeeScheduleRoster.days?.[dayKey]?.[employeeId] || '--'
     );
+    const formatEmployeeCode = value => (
+      String(value).startsWith('OTHER:') ? `Khác: ${String(value).slice(6) || '--'}` : value
+    );
 
     const employeeRows = employeeScheduleRoster.employees.map(employee => `
       <tr>
         <td style="border: 1px solid #000000; padding: 6px 8px; font-size: 8px; font-weight: bold; text-align: left;">${employee.name || '--'}</td>
+        <td style="border: 1px solid #000000; padding: 6px 4px; font-size: 8px; font-weight: bold; text-align: center;">${employee.position || '--'}</td>
         ${rosterDays.map(day => `
-          <td style="border: 1px solid #000000; padding: 6px 4px; font-family: var(--font-mono); font-size: 9px; font-weight: bold; text-align: center;">${getEmployeeCode(employee.id, day.key)}</td>
+          <td style="border: 1px solid #000000; padding: 6px 4px; font-family: var(--font-mono); font-size: 9px; font-weight: bold; text-align: center;">${formatEmployeeCode(getEmployeeCode(employee.id, day.key))}</td>
         `).join('')}
       </tr>
     `).join('');
@@ -187,6 +191,7 @@ export function generateReportHTML(reportData, template = 'standard') {
         <thead>
           <tr style="background-color: #f4f4f5;">
             <th style="border: 1px solid #000000; padding: 6px 8px; font-size: 7.5px; font-weight: bold; text-align: left; width: 22%;">Nhân viên</th>
+            <th style="border: 1px solid #000000; padding: 6px 4px; font-size: 7.5px; font-weight: bold; text-align: center; width: 9%;">Vị trí</th>
             ${rosterDays.map(day => `<th style="border: 1px solid #000000; padding: 6px 4px; font-size: 7.5px; font-weight: bold; text-align: center;">${day.label}</th>`).join('')}
           </tr>
         </thead>

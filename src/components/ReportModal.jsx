@@ -45,6 +45,12 @@ const FormPreview = ({
     if (!val) return '--';
     return val.split(';;').filter(name => name.trim() !== '').join(', ');
   };
+
+  const formatEmployeeScheduleValue = value => {
+    if (!value) return '--';
+    const displayValue = String(value);
+    return displayValue.startsWith('OTHER:') ? `Khác: ${displayValue.slice(6) || '--'}` : displayValue;
+  };
   
   return (
     <div style={{
@@ -164,6 +170,7 @@ const FormPreview = ({
               <thead>
                 <tr style={{ backgroundColor: '#f4f4f5' }}>
                   <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'left' }}>Nhân viên</th>
+                  <th style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center' }}>Vị trí</th>
                   {['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'].map(day => (
                     <th key={day} style={{ border: '1px solid #000000', padding: '4px', fontSize: '7.5px', fontWeight: 'bold', textAlign: 'center' }}>{day}</th>
                   ))}
@@ -173,9 +180,10 @@ const FormPreview = ({
                 {employeeScheduleRoster.employees.map(employee => (
                   <tr key={employee.id}>
                     <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold' }}>{employee.name || '--'}</td>
+                    <td style={{ border: '1px solid #000000', padding: '4px 6px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>{employee.position || '--'}</td>
                     {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map(dayKey => (
                       <td key={dayKey} style={{ border: '1px solid #000000', padding: '4px', fontSize: '8px', fontWeight: 'bold', textAlign: 'center' }}>
-                        {employeeScheduleRoster.days?.[dayKey]?.[employee.id] || '--'}
+                        {formatEmployeeScheduleValue(employeeScheduleRoster.days?.[dayKey]?.[employee.id])}
                       </td>
                     ))}
                   </tr>
@@ -678,7 +686,12 @@ export default function ReportModal({
         const assignments = (employeeScheduleRoster.employees || [])
           .map(employee => {
             const code = employeeScheduleRoster.days?.[day.key]?.[employee.id];
-            return code ? `${employee.name}: ${code}` : '';
+            if (!code) return '';
+            const displayCode = code.startsWith('OTHER:')
+              ? `Khác: ${code.slice(6) || '--'}`
+              : code;
+            const position = employee.position ? ` (${employee.position})` : '';
+            return `${employee.name}${position}: ${displayCode}`;
           })
           .filter(Boolean);
         text += `• *${day.label}:* ${assignments.length ? assignments.join(' | ') : 'Chưa xếp'}\n`;
