@@ -37,6 +37,9 @@ const SHIFT_CODES = [
   { code: 'M', label: 'Ca giữa', tone: 'm' },
   { code: 'OFF', label: 'Nghỉ', tone: 'off' },
   { code: 'AL', label: 'Nghỉ phép', tone: 'al' },
+  { code: 'CA1', display: 'CA 1', label: 'Ca bổ sung 1', tone: 'ca1' },
+  { code: 'CA2', display: 'CA 2', label: 'Ca bổ sung 2', tone: 'ca2' },
+  { code: 'CA3', display: 'CA 3', label: 'Ca bổ sung 3', tone: 'ca3' },
   { code: 'OTHER', label: 'Khác', tone: 'other' }
 ];
 
@@ -509,7 +512,9 @@ export default function ShiftsTab({
                         >
                           <option value="">Chọn mã</option>
                           {SHIFT_CODES.map(option => (
-                            <option key={option.code} value={option.code}>{option.code === 'OTHER' ? 'Khác' : option.code}</option>
+                            <option key={option.code} value={option.code}>
+                              {option.code === 'OTHER' ? 'Khác' : option.display || option.code}
+                            </option>
                           ))}
                         </select>
                         {code === 'OTHER' && (
@@ -541,7 +546,7 @@ export default function ShiftsTab({
           <span className="shift-code-legend-label">Mã ca:</span>
           {SHIFT_CODES.map(option => (
             <span key={option.code} className={`shift-code-badge code-${option.tone}`}>
-              <strong>{option.code === 'OTHER' ? 'Khác' : option.code}</strong>
+              <strong>{option.code === 'OTHER' ? 'Khác' : option.display || option.code}</strong>
               <small>{option.label}</small>
             </span>
           ))}

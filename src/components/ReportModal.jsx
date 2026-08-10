@@ -4,6 +4,12 @@ import confetti from 'canvas-confetti';
 import { getStoreShift, STORES, KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 import { generateReportHTML } from '../utils/reportGenerator';
 
+const SCHEDULE_CODE_LABELS = {
+  CA1: 'CA 1',
+  CA2: 'CA 2',
+  CA3: 'CA 3'
+};
+
 // Native React Form Preview Component for visual presentation inside the app
 const FormPreview = ({
   storeName,
@@ -49,7 +55,8 @@ const FormPreview = ({
   const formatEmployeeScheduleValue = value => {
     if (!value) return '--';
     const displayValue = String(value);
-    return displayValue.startsWith('OTHER:') ? `Khác: ${displayValue.slice(6) || '--'}` : displayValue;
+    if (displayValue.startsWith('OTHER:')) return `Khác: ${displayValue.slice(6) || '--'}`;
+    return SCHEDULE_CODE_LABELS[displayValue] || displayValue;
   };
   
   return (
@@ -689,7 +696,7 @@ export default function ReportModal({
             if (!code) return '';
             const displayCode = code.startsWith('OTHER:')
               ? `Khác: ${code.slice(6) || '--'}`
-              : code;
+              : SCHEDULE_CODE_LABELS[code] || code;
             const position = employee.position ? ` (${employee.position})` : '';
             return `${employee.name}${position}: ${displayCode}`;
           })

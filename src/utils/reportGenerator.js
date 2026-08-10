@@ -1,5 +1,11 @@
 import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 
+const SCHEDULE_CODE_LABELS = {
+  CA1: 'CA 1',
+  CA2: 'CA 2',
+  CA3: 'CA 3'
+};
+
 /**
  * Generates a self-contained, beautifully styled black-and-white HTML webpage for the daily operations report.
  * It is styled as a professional shift log form utilizing the Roboto font.
@@ -170,7 +176,9 @@ export function generateReportHTML(reportData, template = 'standard') {
       employeeScheduleRoster.days?.[dayKey]?.[employeeId] || '--'
     );
     const formatEmployeeCode = value => (
-      String(value).startsWith('OTHER:') ? `Khác: ${String(value).slice(6) || '--'}` : value
+      String(value).startsWith('OTHER:')
+        ? `Khác: ${String(value).slice(6) || '--'}`
+        : SCHEDULE_CODE_LABELS[value] || value
     );
 
     const employeeRows = employeeScheduleRoster.employees.map(employee => `

@@ -3199,6 +3199,27 @@ ul.space-y-3 li {
   color: #66726a;
 }
 
+.shift-employee-code-cell.code-ca1 .shift-code-select,
+.shift-code-badge.code-ca1 {
+  background: #edf4ef;
+  border-color: #bdd2c1;
+  color: #41624a;
+}
+
+.shift-employee-code-cell.code-ca2 .shift-code-select,
+.shift-code-badge.code-ca2 {
+  background: #edf1f3;
+  border-color: #c2d0d5;
+  color: #435c64;
+}
+
+.shift-employee-code-cell.code-ca3 .shift-code-select,
+.shift-code-badge.code-ca3 {
+  background: #f4efe6;
+  border-color: #d8c9ad;
+  color: #6b5835;
+}
+
 .shift-employee-empty-cell {
   background: #fbfcfb;
   color: #849188;

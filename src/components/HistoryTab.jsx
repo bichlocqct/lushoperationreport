@@ -59,7 +59,8 @@ const FormPreview = ({
   const formatEmployeeScheduleValue = value => {
     if (!value) return '--';
     const displayValue = String(value);
-    return displayValue.startsWith('OTHER:') ? `Khác: ${displayValue.slice(6) || '--'}` : displayValue;
+    if (displayValue.startsWith('OTHER:')) return `Khác: ${displayValue.slice(6) || '--'}`;
+    return SCHEDULE_CODE_LABELS[displayValue] || displayValue;
   };
   
   return (
@@ -488,8 +489,17 @@ const HISTORY_SHIFTS = [
   { key: 'M', label: 'M' },
   { key: 'OFF', label: 'OFF' },
   { key: 'AL', label: 'AL' },
+  { key: 'CA1', label: 'CA 1' },
+  { key: 'CA2', label: 'CA 2' },
+  { key: 'CA3', label: 'CA 3' },
   { key: 'OTHER', label: 'Khác' }
 ];
+
+const SCHEDULE_CODE_LABELS = {
+  CA1: 'CA 1',
+  CA2: 'CA 2',
+  CA3: 'CA 3'
+};
 
 const getReportDate = (report) => {
   const date = report?.date ? new Date(report.date) : new Date();
