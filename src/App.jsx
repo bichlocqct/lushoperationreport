@@ -153,6 +153,11 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [historyFocusId, setHistoryFocusId] = useState(null);
 
+  const openReportModal = (dateKey = new Date().toISOString().split('T')[0]) => {
+    setReportDate(dateKey);
+    setIsReportModalOpen(true);
+  };
+
   // Load reports and today's session from API (with localStorage fallback) on mount
   useEffect(() => {
     const fetchReports = async () => {
@@ -410,7 +415,7 @@ export default function App() {
 
           {/* Action button */}
           <button 
-            onClick={() => setIsReportModalOpen(true)}
+            onClick={() => openReportModal()}
             className="btn-white text-xs w-full py-2.5 flex items-center justify-center gap-1.5"
           >
             <FileText size={14} />
@@ -537,7 +542,7 @@ export default function App() {
             <HistoryTab 
               reports={reports}
               onDeleteReport={handleDeleteReport}
-              onOpenExportModal={() => setIsReportModalOpen(true)}
+              onOpenExportModal={openReportModal}
               focusReportId={historyFocusId}
             />
           )}
@@ -561,6 +566,7 @@ export default function App() {
         overallComments={overallComments}
         weeklyShifts={weeklyShifts}
         employeeRoster={employeeRoster}
+        reportDate={reportDate}
         onSaveReport={handleSaveReport}
       />
     </div>

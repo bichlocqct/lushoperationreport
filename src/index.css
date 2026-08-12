@@ -4339,6 +4339,31 @@ ul.space-y-3 li {
   font-size: 0.62rem;
 }
 
+.history-day-empty button {
+  align-items: center;
+  background: #557760;
+  border: 1px solid #557760;
+  border-radius: 7px;
+  color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.62rem;
+  font-weight: 800;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.8rem;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.history-day-empty button:hover {
+  background: #41624a;
+  transform: translateY(-1px);
+}
+
+.history-day-empty button:active {
+  transform: translateY(0);
+}
+
 /* Keep the full date picker compact in the summary corner. */
 .history-summary-panel {
   position: relative;

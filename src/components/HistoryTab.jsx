@@ -1177,7 +1177,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
               Sau khi điền thông số ca và hoàn tất checklist, bạn hãy chọn "Xuất Báo Cáo" ở góc dưới bên trái của menu chính hoặc bấm trực tiếp nút bên dưới để tạo báo cáo.
             </p>
             <button
-              onClick={onOpenExportModal}
+              onClick={() => onOpenExportModal(activeDateKey)}
               className="btn-black text-xs py-2 px-6 flex items-center justify-center gap-1.5 mt-2"
             >
               <FileText size={14} />
@@ -1190,8 +1190,12 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
           {visibleReports.length === 0 ? (
             <div className="history-day-empty">
               <Calendar size={18} />
-              <strong>Chưa có báo cáo trong ngày này</strong>
-              <span>Hãy chọn ngày có dấu số báo cáo trên lịch để mở bản lưu.</span>
+              <strong>Bản ghi vận hành ngày {formatShortDate(parseDateKey(activeDateKey))}/{parseDateKey(activeDateKey).getFullYear()}</strong>
+              <span>Chưa có report được lưu trong ngày này. Bạn có thể tạo bản ghi ngay cho ngày đang chọn.</span>
+              <button type="button" onClick={() => onOpenExportModal(activeDateKey)}>
+                <FileText size={14} />
+                Tạo bản ghi ngày này
+              </button>
             </div>
           ) : visibleReports.map(report => {
             const isExpanded = expandedReportId === report.id;

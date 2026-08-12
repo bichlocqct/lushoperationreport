@@ -485,6 +485,7 @@ export default function ReportModal({
   overallComments = '',
   weeklyShifts = {},
   employeeRoster = {},
+  reportDate = '',
   onSaveReport
 }) {
   const [reportTemplate, setReportTemplate] = useState('standard'); // 'standard' | 'compact'
@@ -503,7 +504,16 @@ export default function ReportModal({
 
   if (!isOpen) return null;
 
-  const todayStr = new Date().toLocaleDateString('vi-VN', {
+  const selectedReportDate = (() => {
+    if (!reportDate) return new Date();
+    const [year, month, day] = reportDate.split('-').map(Number);
+    const parsedDate = new Date(year, month - 1, day);
+    return Number.isNaN(parsedDate.getTime()) ? new Date() : parsedDate;
+  })();
+  const reportDateKey = /^\d{4}-\d{2}-\d{2}$/.test(reportDate)
+    ? reportDate
+    : selectedReportDate.toISOString().split('T')[0];
+  const todayStr = selectedReportDate.toLocaleDateString('vi-VN', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -512,7 +522,7 @@ export default function ReportModal({
 
   // Lookup today's shift allocation from shifts roster tab
   const activeStore = STORES.find(s => s.name === storeName) || STORES[0];
-  const dayOfWeek = new Date().getDay(); // 0 is Sunday, 6 is Saturday
+  const dayOfWeek = selectedReportDate.getDay(); // 0 is Sunday, 6 is Saturday
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
   const getDayKey = () => {
@@ -813,14 +823,15 @@ export default function ReportModal({
 
     const timeStamp = Date.now();
     const cleanStoreId = storeName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim();
-    const dateFormatted = new Date().toISOString().split('T')[0];
+    const dateFormatted = reportDateKey;
     const fileName = `report-${dateFormatted}-${cleanStoreId}-${timeStamp}.html`;
+    const savedReportDate = new Date(`${reportDateKey}T12:00:00`).toISOString();
 
     const reportData = {
       id: `rep-${timeStamp}`,
       storeName,
       leader,
-      date: new Date().toISOString(),
+      date: savedReportDate,
       dateStr: todayStr,
       template: reportTemplate,
       progress: {
