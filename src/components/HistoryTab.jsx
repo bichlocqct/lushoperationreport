@@ -526,6 +526,16 @@ const formatShortDate = (date) => (
   `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
 );
 
+const formatReportDateLabel = (report) => {
+  if (!report?.date && report?.dateStr) return report.dateStr;
+  return getReportDate(report).toLocaleDateString('vi-VN', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
 const parseDateKey = (dateKey) => {
   if (!dateKey) return new Date();
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -750,8 +760,8 @@ function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, sel
           <div className="history-summary-icon"><BarChart3 size={18} /></div>
           <div>
             <span className="history-summary-eyebrow">Tổng hợp vận hành</span>
-            <h3>Báo cáo theo tuần</h3>
-            <p>Tổng hợp report theo cửa hàng và số nhân sự ở từng ca trong tuần.</p>
+            <h3>Bản ghi vận hành theo ngày</h3>
+            <p>Chọn từng ngày để xem các bản report đã lưu và tổng hợp nhân sự trong tuần.</p>
           </div>
         </div>
         <div className="history-selected-date-label">
@@ -1151,7 +1161,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
 
       {reports.length > 0 && (
         <div className="history-report-period">
-          <span>Báo cáo ngày {formatShortDate(parseDateKey(activeDateKey))}/{parseDateKey(activeDateKey).getFullYear()} {selectedStoreName ? `· ${selectedStoreName}` : '· tất cả cửa hàng'}</span>
+          <span>Bản ghi vận hành ngày {formatShortDate(parseDateKey(activeDateKey))}/{parseDateKey(activeDateKey).getFullYear()} {selectedStoreName ? `· ${selectedStoreName}` : '· tất cả cửa hàng'}</span>
           <strong>{visibleReports.length} bản báo cáo</strong>
         </div>
       )}
@@ -1204,7 +1214,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                     </div>
                     <div className="history-header-details">
                       <strong className="history-header-store">{report.storeName}</strong>
-                      <span className="history-header-date">{report.dateStr}</span>
+                      <span className="history-header-date">{formatReportDateLabel(report)}</span>
                     </div>
                   </div>
 
@@ -1352,7 +1362,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                     <div className="bg-white border border-border-medium rounded-none" style={{ height: '55vh', overflowY: 'auto' }}>
                       <FormPreview 
                         storeName={report.storeName}
-                        dateStr={report.dateStr}
+                        dateStr={formatReportDateLabel(report)}
                         leader={report.leader}
                         rosterShelf={report.rosterShelf}
                         rosterPos={report.rosterPos}

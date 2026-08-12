@@ -4339,6 +4339,124 @@ ul.space-y-3 li {
   font-size: 0.62rem;
 }
 
+/* Keep the full date picker compact in the summary corner. */
+.history-summary-panel {
+  position: relative;
+}
+
+.history-summary-header {
+  min-height: 226px;
+  padding-right: 340px;
+}
+
+.history-selected-date-label {
+  display: none;
+}
+
+.history-calendar-section {
+  background: #ffffff;
+  border: 1px solid var(--history-line);
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(31, 44, 34, 0.05);
+  padding: 0.7rem;
+  position: absolute;
+  right: 1.35rem;
+  top: 1rem;
+  width: 310px;
+  z-index: 1;
+}
+
+.history-calendar-header {
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.45rem;
+}
+
+.history-calendar-header > div:first-child {
+  min-width: 0;
+}
+
+.history-calendar-header .history-subheading {
+  font-size: 0.62rem;
+  margin-bottom: 0;
+  white-space: nowrap;
+}
+
+.history-calendar-header p,
+.history-calendar-legend {
+  display: none;
+}
+
+.history-calendar-controls {
+  flex: 0 0 auto;
+  gap: 0.2rem;
+}
+
+.history-calendar-controls strong {
+  font-size: 0.58rem;
+  min-width: 88px;
+}
+
+.history-calendar-controls button {
+  border-radius: 5px;
+  height: 23px;
+  width: 23px;
+}
+
+.history-calendar-grid {
+  gap: 0.12rem;
+}
+
+.history-calendar-weekday {
+  font-size: 0.48rem;
+  padding: 0.12rem 0;
+}
+
+.history-calendar-day {
+  border-radius: 5px;
+  min-height: 24px;
+  padding: 0.16rem 0.1rem;
+}
+
+.history-calendar-day > span {
+  font-size: 0.58rem;
+}
+
+.history-calendar-day small {
+  font-size: 0.42rem;
+  height: 11px;
+  min-width: 11px;
+}
+
+@media (max-width: 900px) {
+  .history-summary-header {
+    min-height: 232px;
+    padding-right: 330px;
+  }
+
+  .history-calendar-section {
+    right: 0.9rem;
+    width: 292px;
+  }
+}
+
+@media (max-width: 640px) {
+  .history-summary-header {
+    min-height: auto;
+    padding-right: 0.8rem;
+  }
+
+  .history-calendar-section {
+    margin-top: 0.75rem;
+    position: static;
+    width: auto;
+  }
+
+  .history-calendar-header .history-subheading {
+    white-space: normal;
+  }
+}
+
 @media (max-width: 640px) {
   .history-selected-date-label {
     align-self: stretch;
@@ -4366,6 +4484,31 @@ ul.space-y-3 li {
 
   .history-calendar-day {
     min-height: 42px;
+  }
+}
+
+@media (max-width: 640px) {
+  .history-calendar-header {
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .history-calendar-controls {
+    align-self: auto;
+    justify-content: initial;
+  }
+
+  .history-calendar-controls strong {
+    flex: 0 0 auto;
+    min-width: 88px;
+  }
+
+  .history-calendar-day {
+    min-height: 24px;
+  }
+
+  .history-selected-date-label {
+    display: flex;
   }
 }
 
