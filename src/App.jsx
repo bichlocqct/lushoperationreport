@@ -133,7 +133,7 @@ export default function App() {
   // Weekly Store Shifts Roster State: { [storeId]: { [shiftKey]: { [day]: '' } } }
   const [weeklyShifts, setWeeklyShifts] = useState({});
 
-  // Employee-first roster: { [storeId]: { employees: [{ id, name }], days: { [day]: { [employeeId]: code } } } }
+  // Employee-first roster: { [storeId]: { activeWeekKey, weeks: { [weekKey]: { employees, days } } } }
   const [employeeRoster, setEmployeeRoster] = useState(() => {
     const saved = localStorage.getItem('lush_employee_roster');
     if (saved) {

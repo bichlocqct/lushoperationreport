@@ -25,6 +25,71 @@ const DAYS = [
   { key: 'sunday', label: 'Chủ Nhật', shortLabel: 'CN', isWeekend: true }
 ];
 
+const getWeekStartDate = dateValue => {
+  const date = new Date(dateValue);
+  date.setHours(0, 0, 0, 0);
+  const day = date.getDay();
+  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+  return date;
+};
+
+const getWeekKey = dateValue => {
+  const date = getWeekStartDate(dateValue);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatWeekLabel = weekKey => {
+  const start = getWeekStartDate(`${weekKey}T12:00:00`);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const format = date => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+  return `${format(start)} – ${format(end)}/${end.getFullYear()}`;
+};
+
+const formatWeekDayLabel = (weekKey, dayIndex) => {
+  const date = getWeekStartDate(`${weekKey}T12:00:00`);
+  date.setDate(date.getDate() + dayIndex);
+  return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+};
+
+const getWeekOptions = () => {
+  const currentWeek = getWeekStartDate(new Date());
+  return Array.from({ length: 17 }, (_, index) => {
+    const start = new Date(currentWeek);
+    start.setDate(currentWeek.getDate() + (index - 8) * 7);
+    const key = getWeekKey(start);
+    return { key, label: formatWeekLabel(key) };
+  });
+};
+
+const cloneRoster = roster => ({
+  employees: (roster?.employees || []).map(employee => ({ ...employee })),
+  days: Object.fromEntries(
+    Object.entries(roster?.days || {}).map(([dayKey, dayValues]) => [dayKey, { ...dayValues }])
+  )
+});
+
+const getRosterForWeek = (storeRoster, weekKey, currentWeekKey, fallbackRoster) => {
+  if (storeRoster?.weeks?.[weekKey]) return cloneRoster(storeRoster.weeks[weekKey]);
+
+  const legacyRoster = storeRoster && !storeRoster.weeks
+    ? storeRoster
+    : null;
+  const shouldUseLegacyDays = legacyRoster && (!legacyRoster.activeWeekKey || legacyRoster.activeWeekKey === weekKey)
+    && weekKey === currentWeekKey;
+  const employeeSource = storeRoster?.employees?.length
+    ? storeRoster
+    : fallbackRoster;
+
+  return {
+    employees: (employeeSource?.employees || []).map(employee => ({ ...employee })),
+    days: shouldUseLegacyDays ? cloneRoster(legacyRoster).days : {}
+  };
+};
+
 const SHIFT_ROWS = [
   { key: 'morning', label: 'Ca sáng', note: 'Chuẩn bị & mở cửa', tone: 'morning', number: '01' },
   { key: 'middle', label: 'Ca giữa', note: 'Vận hành giữa ngày', tone: 'middle', number: '02' },
@@ -172,11 +237,20 @@ export default function ShiftsTab({
   setEmployeeRoster
 }) {
   const selectedStore = STORES.find(store => store.id === selectedStoreId) || STORES[0];
+  const currentWeekKey = getWeekKey(new Date());
+  const weekOptions = useMemo(() => getWeekOptions(), []);
+  const [selectedWeekKey, setSelectedWeekKey] = useState(
+    () => employeeRoster[selectedStoreId]?.activeWeekKey || currentWeekKey
+  );
   const [activeRegion, setActiveRegion] = useState(selectedStore.region);
 
   useEffect(() => {
     if (selectedStore) setActiveRegion(selectedStore.region);
   }, [selectedStore, selectedStoreId]);
+
+  useEffect(() => {
+    setSelectedWeekKey(employeeRoster[selectedStoreId]?.activeWeekKey || currentWeekKey);
+  }, [currentWeekKey, employeeRoster, selectedStoreId]);
 
   const filteredStores = useMemo(
     () => STORES.filter(store => store.region === activeRegion),
@@ -188,7 +262,13 @@ export default function ShiftsTab({
     [selectedStoreId, weeklyShifts]
   );
 
-  const activeEmployeeRoster = employeeRoster[selectedStoreId] || legacyRoster;
+  const storeEmployeeRoster = employeeRoster[selectedStoreId] || null;
+  const activeEmployeeRoster = getRosterForWeek(
+    storeEmployeeRoster,
+    selectedWeekKey,
+    currentWeekKey,
+    legacyRoster
+  );
   const employees = activeEmployeeRoster.employees || [];
   const rosterDays = activeEmployeeRoster.days || {};
 
@@ -206,14 +286,66 @@ export default function ShiftsTab({
     if (regionalStores.length > 0) setSelectedStoreId(regionalStores[0].id);
   };
 
-  const updateEmployeeRoster = updater => {
+  const persistRosterForWeek = (weekKey, updater) => {
     setEmployeeRoster(prev => {
-      const current = prev[selectedStoreId] || activeEmployeeRoster;
+      const storedRoster = prev[selectedStoreId] || {};
+      const currentRoster = getRosterForWeek(storedRoster, weekKey, currentWeekKey, legacyRoster);
+      const nextRoster = cloneRoster(updater(currentRoster));
+
       return {
         ...prev,
-        [selectedStoreId]: updater(current)
+        [selectedStoreId]: {
+          ...storedRoster,
+          activeWeekKey: weekKey,
+          employees: nextRoster.employees,
+          days: nextRoster.days,
+          weeks: {
+            ...(storedRoster.weeks || {}),
+            [weekKey]: nextRoster
+          }
+        }
       };
     });
+  };
+
+  const handleWeekChange = weekKey => {
+    const previousWeekKey = selectedWeekKey;
+    setSelectedWeekKey(weekKey);
+    setEmployeeRoster(prev => {
+      const storedRoster = prev[selectedStoreId] || {};
+      const previousRoster = getRosterForWeek(
+        storedRoster,
+        previousWeekKey,
+        currentWeekKey,
+        legacyRoster
+      );
+      const nextRoster = getRosterForWeek(
+        storedRoster,
+        weekKey,
+        currentWeekKey,
+        legacyRoster
+      );
+      const weeks = {
+        ...(storedRoster.weeks || {}),
+        [previousWeekKey]: cloneRoster(previousRoster),
+        [weekKey]: cloneRoster(nextRoster)
+      };
+
+      return {
+        ...prev,
+        [selectedStoreId]: {
+          ...storedRoster,
+          activeWeekKey: weekKey,
+          employees: nextRoster.employees,
+          days: nextRoster.days,
+          weeks
+        }
+      };
+    });
+  };
+
+  const updateEmployeeRoster = updater => {
+    persistRosterForWeek(selectedWeekKey, updater);
   };
 
   const addEmployee = () => {
@@ -341,7 +473,7 @@ export default function ShiftsTab({
           <div className="shift-hero-meta-icon"><CalendarDays size={18} /></div>
           <div>
             <span>Tuần vận hành</span>
-            <strong>Thứ 2 – Chủ Nhật</strong>
+            <strong>{formatWeekLabel(selectedWeekKey)}</strong>
           </div>
         </div>
       </section>
@@ -418,8 +550,25 @@ export default function ShiftsTab({
             <div>
               <span className="shift-eyebrow">Lịch tuần / {selectedStore.name}</span>
               <h2>Bảng phân ca làm việc</h2>
-              <p>Mỗi cột là một nhân viên, mỗi hàng là một ngày. Chọn mã A, B, M, AL hoặc OFF cho từng ô.</p>
+              <p>Mỗi hàng là một nhân viên, mỗi cột là một ngày. Lịch được lưu riêng theo tuần đang chọn.</p>
             </div>
+          </div>
+          <div className="shift-week-picker">
+            <label htmlFor="shift-week-select">Tuần sắp lịch</label>
+            <div className="shift-week-picker-control">
+              <CalendarDays size={14} />
+              <select
+                id="shift-week-select"
+                value={selectedWeekKey}
+                onChange={event => handleWeekChange(event.target.value)}
+              >
+                {weekOptions.map(week => (
+                  <option key={week.key} value={week.key}>{week.label}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} aria-hidden="true" />
+            </div>
+            <small>Lịch tuần này được lưu độc lập.</small>
           </div>
           <div className="shift-roster-actions">
             <button type="button" onClick={addEmployee} className="shift-add-employee-button">
@@ -450,10 +599,11 @@ export default function ShiftsTab({
               <tr>
                 <th className="shift-employee-name-column-header">Nhân viên</th>
                 <th className="shift-employee-position-header">Vị trí</th>
-                {DAYS.map(day => (
+                {DAYS.map((day, dayIndex) => (
                   <th key={day.key} className={`shift-employee-day-header ${day.isWeekend ? 'is-weekend' : ''}`}>
                     <span>{day.shortLabel}</span>
                     <strong>{day.label}</strong>
+                    <small>{formatWeekDayLabel(selectedWeekKey, dayIndex)}</small>
                     {day.isWeekend && <small>Cuối tuần</small>}
                   </th>
                 ))}

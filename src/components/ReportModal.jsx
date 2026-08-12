@@ -10,6 +10,17 @@ const SCHEDULE_CODE_LABELS = {
   CA3: 'CA 3'
 };
 
+const getWeekKey = date => {
+  const weekStart = new Date(date);
+  weekStart.setHours(0, 0, 0, 0);
+  const day = weekStart.getDay();
+  weekStart.setDate(weekStart.getDate() - (day === 0 ? 6 : day - 1));
+  const year = weekStart.getFullYear();
+  const month = String(weekStart.getMonth() + 1).padStart(2, '0');
+  const dateNumber = String(weekStart.getDate()).padStart(2, '0');
+  return `${year}-${month}-${dateNumber}`;
+};
+
 // Native React Form Preview Component for visual presentation inside the app
 const FormPreview = ({
   storeName,
@@ -545,7 +556,10 @@ export default function ReportModal({
     todayDayKey
   );
 
-  const employeeScheduleRoster = employeeRoster[activeStore.id] || null;
+  const storeEmployeeRoster = employeeRoster[activeStore.id] || null;
+  const reportWeekKey = getWeekKey(selectedReportDate);
+  const employeeScheduleRoster = storeEmployeeRoster?.weeks?.[reportWeekKey]
+    || (storeEmployeeRoster && !storeEmployeeRoster.weeks ? storeEmployeeRoster : null);
 
   const getShiftStaff = (shiftKey) => {
     const codeByShift = { morning: 'A', middle: 'M', afternoon: 'B' };
