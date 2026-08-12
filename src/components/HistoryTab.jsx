@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BarChart3, Calendar, Check, ChevronDown, Copy, Eye, EyeOff, FileText, Globe, ShoppingBag, Store, Trash2, UsersRound } from 'lucide-react';
+import { BarChart3, Calendar, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Eye, EyeOff, FileText, Globe, ShoppingBag, Store, Trash2, UsersRound } from 'lucide-react';
 import { generateReportHTML } from '../utils/reportGenerator';
 import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from '../data/initialData';
 
@@ -526,6 +526,30 @@ const formatShortDate = (date) => (
   `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
 );
 
+const parseDateKey = (dateKey) => {
+  if (!dateKey) return new Date();
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const parsed = new Date(year, month - 1, day);
+  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+};
+
+const formatMonthLabel = (date) => (
+  date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+);
+
+const getCalendarDays = (monthDate) => {
+  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const mondayOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  const gridStart = new Date(firstDay);
+  gridStart.setDate(firstDay.getDate() - mondayOffset);
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(gridStart);
+    day.setDate(gridStart.getDate() + index);
+    return day;
+  });
+};
+
 const getDayKeyFromDate = (date) => {
   const day = date.getDay();
   return HISTORY_DAYS[day === 0 ? 6 : day - 1].key;
@@ -680,13 +704,44 @@ const buildWeeklySummaries = (reports) => {
     });
 };
 
-function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStoreName, onStoreChange }) {
-  const selectedWeek = summaries.find(week => week.key === selectedWeekKey) || summaries[0];
-  if (!selectedWeek) return null;
+function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, selectedStoreName, onStoreChange }) {
+  const selectedDate = parseDateKey(selectedDateKey);
+  const selectedWeekKey = formatDateKey(getWeekStart(selectedDate));
+  const selectedWeek = summaries.find(week => week.key === selectedWeekKey);
+  const reportsByDate = reports.reduce((map, report) => {
+    const dateKey = formatDateKey(getReportDate(report));
+    map[dateKey] = (map[dateKey] || 0) + 1;
+    return map;
+  }, {});
 
-  const dayTotals = Object.fromEntries(selectedWeek.dayTotals.map(day => [day.key, day]));
-  const selectedStore = selectedWeek.stores.find(store => store.name === selectedStoreName) || selectedWeek.stores[0];
-  const weekLabel = `${formatShortDate(selectedWeek.start)} – ${formatShortDate(selectedWeek.end)}/${selectedWeek.end.getFullYear()}`;
+  const [calendarMonth, setCalendarMonth] = useState(
+    new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
+  );
+
+  useEffect(() => {
+    const nextSelectedDate = parseDateKey(selectedDateKey);
+    setCalendarMonth(new Date(nextSelectedDate.getFullYear(), nextSelectedDate.getMonth(), 1));
+  }, [selectedDateKey]);
+
+  const selectedWeekData = selectedWeek || {
+    key: selectedWeekKey,
+    start: getWeekStart(selectedDate),
+    end: new Date(getWeekStart(selectedDate).getFullYear(), getWeekStart(selectedDate).getMonth(), getWeekStart(selectedDate).getDate() + 6),
+    reports: [],
+    stores: [],
+    dayTotals: HISTORY_DAYS.map(day => ({ ...day, total: 0 })),
+    totalAssignments: 0
+  };
+
+  const dayTotals = Object.fromEntries(selectedWeekData.dayTotals.map(day => [day.key, day]));
+  const selectedStore = selectedWeekData.stores.find(store => store.name === selectedStoreName) || selectedWeekData.stores[0];
+  const weekLabel = `${formatShortDate(selectedWeekData.start)} – ${formatShortDate(selectedWeekData.end)}/${selectedWeekData.end.getFullYear()}`;
+  const getStoreShiftCount = (dayKey, shiftKey) => (
+    selectedStore?.dayTotals.find(day => day.key === dayKey)?.[shiftKey] || 0
+  );
+  const getStoreShiftWeekTotal = shiftKey => (
+    HISTORY_DAYS.reduce((sum, day) => sum + getStoreShiftCount(day.key, shiftKey), 0)
+  );
 
   return (
     <section className="history-summary-panel">
@@ -699,20 +754,69 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
             <p>Tổng hợp report theo cửa hàng và số nhân sự ở từng ca trong tuần.</p>
           </div>
         </div>
-        <label className="history-week-select">
-          <span>Tuần báo cáo</span>
+        <div className="history-selected-date-label">
+          <span>Ngày đang xem</span>
+          <strong>{formatShortDate(selectedDate)}/{selectedDate.getFullYear()}</strong>
+        </div>
+      </div>
+
+      <div className="history-calendar-section">
+        <div className="history-calendar-header">
           <div>
-            <Calendar size={14} />
-            <select value={selectedWeek.key} onChange={event => onWeekChange(event.target.value)}>
-              {summaries.map(week => (
-                <option key={week.key} value={week.key}>
-                  {formatShortDate(week.start)} – {formatShortDate(week.end)}/{week.end.getFullYear()}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={14} />
+            <div className="history-subheading">
+              <Calendar size={15} />
+              <span>Chọn ngày báo cáo</span>
+            </div>
+            <p>Chọn một ngày để xem đúng các bản report được lưu trong ngày đó.</p>
           </div>
-        </label>
+          <div className="history-calendar-controls">
+            <button
+              type="button"
+              onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))}
+              aria-label="Tháng trước"
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <strong>{formatMonthLabel(calendarMonth)}</strong>
+            <button
+              type="button"
+              onClick={() => setCalendarMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))}
+              aria-label="Tháng sau"
+            >
+              <ChevronRight size={15} />
+            </button>
+          </div>
+        </div>
+        <div className="history-calendar-grid" role="grid" aria-label="Lịch chọn ngày báo cáo">
+          {HISTORY_DAYS.map(day => (
+            <span key={day.key} className="history-calendar-weekday">{day.shortLabel}</span>
+          ))}
+          {getCalendarDays(calendarMonth).map(day => {
+            const dayKey = formatDateKey(day);
+            const reportCount = reportsByDate[dayKey] || 0;
+            const isCurrentMonth = day.getMonth() === calendarMonth.getMonth();
+            const isSelected = dayKey === selectedDateKey;
+            const isSelectedWeek = formatDateKey(getWeekStart(day)) === selectedWeekKey;
+
+            return (
+              <button
+                type="button"
+                key={dayKey}
+                className={`history-calendar-day ${isCurrentMonth ? '' : 'is-outside-month'} ${isSelectedWeek ? 'is-selected-week' : ''} ${isSelected ? 'is-selected' : ''} ${reportCount > 0 ? 'has-reports' : ''}`}
+                onClick={() => onDateChange(dayKey)}
+                aria-label={`${formatShortDate(day)}${reportCount > 0 ? `, ${reportCount} báo cáo` : ', chưa có báo cáo'}`}
+                aria-pressed={isSelected}
+              >
+                <span>{day.getDate()}</span>
+                {reportCount > 0 && <small>{reportCount}</small>}
+              </button>
+            );
+          })}
+        </div>
+        <div className="history-calendar-legend">
+          <span><i className="has-report-dot" /> Có báo cáo</span>
+          <span><i className="selected-week-mark" /> Tuần đang xem</span>
+        </div>
       </div>
 
       <div className="history-summary-metrics">
@@ -722,15 +826,15 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
         </div>
         <div>
           <span>Tổng báo cáo</span>
-          <strong>{selectedWeek.reports.length}</strong>
+            <strong>{selectedWeekData.reports.length}</strong>
         </div>
         <div>
           <span>Cửa hàng</span>
-          <strong>{selectedWeek.stores.length}</strong>
+            <strong>{selectedWeekData.stores.length}</strong>
         </div>
         <div>
           <span>Tổng lượt ca</span>
-          <strong>{selectedWeek.totalAssignments}</strong>
+          <strong>{selectedWeekData.totalAssignments}</strong>
         </div>
       </div>
 
@@ -743,7 +847,7 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
           <p>Bấm vào từng cửa hàng để mở bảng tổng nhân sự và các bản report trong tuần.</p>
         </div>
         <div className="history-store-choice-list">
-          {selectedWeek.stores.map(store => (
+          {selectedWeekData.stores.map(store => (
             <button
               type="button"
               key={store.name}
@@ -786,22 +890,26 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
               </thead>
               <tbody>
                 {HISTORY_SHIFTS.map(shift => (
-                  <tr key={shift.key}>
-                    <th>{shift.label}</th>
+                  <tr key={shift.key} className={getStoreShiftWeekTotal(shift.key) > 0 ? 'has-staff-row' : ''}>
+                    <th className={getStoreShiftWeekTotal(shift.key) > 0 ? 'has-staff-label' : ''}>{shift.label}</th>
                     {HISTORY_DAYS.map(day => (
-                      <td key={day.key}>{selectedStore.dayTotals.find(item => item.key === day.key)?.[shift.key] || 0}</td>
+                      <td key={day.key} className={getStoreShiftCount(day.key, shift.key) > 0 ? 'has-staff-cell' : ''}>
+                        {getStoreShiftCount(day.key, shift.key)}
+                      </td>
                     ))}
-                    <td className="history-week-total">
-                      {HISTORY_DAYS.reduce((sum, day) => sum + (selectedStore.dayTotals.find(item => item.key === day.key)?.[shift.key] || 0), 0)}
+                    <td className={`history-week-total ${getStoreShiftWeekTotal(shift.key) > 0 ? 'has-staff-cell' : ''}`}>
+                      {getStoreShiftWeekTotal(shift.key)}
                     </td>
                   </tr>
                 ))}
                 <tr className="history-day-total-row">
                   <th>Tổng/ngày</th>
                   {HISTORY_DAYS.map(day => (
-                    <td key={day.key}>{selectedStore.dayTotals.find(item => item.key === day.key)?.total || 0}</td>
+                    <td key={day.key} className={selectedStore.dayTotals.find(item => item.key === day.key)?.total > 0 ? 'has-staff-cell' : ''}>
+                      {selectedStore.dayTotals.find(item => item.key === day.key)?.total || 0}
+                    </td>
                   ))}
-                  <td>{selectedStore.rosterTotal}</td>
+                  <td className={selectedStore.rosterTotal > 0 ? 'has-staff-cell' : ''}>{selectedStore.rosterTotal}</td>
                 </tr>
               </tbody>
             </table>
@@ -839,7 +947,7 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
                 <tr className="history-day-total-row">
                   <th>Tổng/ngày</th>
                   {HISTORY_DAYS.map(day => <td key={day.key}>{dayTotals[day.key].total}</td>)}
-                  <td>{selectedWeek.totalAssignments}</td>
+                  <td>{selectedWeekData.totalAssignments}</td>
                 </tr>
               </tbody>
             </table>
@@ -853,7 +961,7 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
             <span>Report theo cửa hàng</span>
           </div>
           <div className="history-store-list">
-            {selectedWeek.stores.map(store => (
+            {selectedWeekData.stores.map(store => (
               <div className="history-store-row" key={store.name}>
                 <div>
                   <strong>{store.name}</strong>
@@ -875,7 +983,7 @@ function HistorySummary({ summaries, selectedWeekKey, onWeekChange, selectedStor
           <span>Tổng nhân sự theo từng cửa hàng</span>
         </div>
         <div className="history-store-roster-list">
-          {selectedWeek.stores.map(store => {
+          {selectedWeekData.stores.map(store => {
             const storeDayTotals = Object.fromEntries(store.dayTotals.map(day => [day.key, day]));
 
             return (
@@ -933,28 +1041,31 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
   const [copiedId, setCopiedId] = useState(null);
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
   const weeklySummaries = useMemo(() => buildWeeklySummaries(reports), [reports]);
-  const [selectedWeekKey, setSelectedWeekKey] = useState(weeklySummaries[0]?.key || '');
+  const [selectedDateKey, setSelectedDateKey] = useState('');
   const [selectedStoreName, setSelectedStoreName] = useState('');
-  const selectedWeekSummary = weeklySummaries.find(week => week.key === selectedWeekKey) || weeklySummaries[0];
+  const latestReportDateKey = reports.length > 0
+    ? formatDateKey(getReportDate(reports[0]))
+    : formatDateKey(new Date());
+  const activeDateKey = selectedDateKey || latestReportDateKey;
+  const selectedWeekKey = formatDateKey(getWeekStart(parseDateKey(activeDateKey)));
+  const selectedWeekSummary = weeklySummaries.find(week => week.key === selectedWeekKey);
   const visibleReports = useMemo(() => (
-    selectedWeekKey
-      ? reports.filter(report => (
-        formatDateKey(getWeekStart(getReportDate(report))) === selectedWeekKey
-        && (!selectedStoreName || report.storeName === selectedStoreName)
-      ))
-      : reports
-  ), [reports, selectedStoreName, selectedWeekKey]);
+    reports.filter(report => (
+      formatDateKey(getReportDate(report)) === activeDateKey
+      && (!selectedStoreName || report.storeName === selectedStoreName)
+    ))
+  ), [activeDateKey, reports, selectedStoreName]);
 
   useEffect(() => {
-    if (weeklySummaries.length > 0 && !weeklySummaries.some(week => week.key === selectedWeekKey)) {
-      setSelectedWeekKey(weeklySummaries[0].key);
+    if (reports.length > 0 && !selectedDateKey) {
+      setSelectedDateKey(formatDateKey(getReportDate(reports[0])));
     }
-  }, [selectedWeekKey, weeklySummaries]);
+  }, [reports, selectedDateKey]);
 
   useEffect(() => {
     const stores = selectedWeekSummary?.stores || [];
-    if (stores.length > 0 && !stores.some(store => store.name === selectedStoreName)) {
-      setSelectedStoreName(stores[0].name);
+    if (selectedStoreName && !stores.some(store => store.name === selectedStoreName)) {
+      setSelectedStoreName('');
     }
   }, [selectedStoreName, selectedWeekSummary]);
 
@@ -963,7 +1074,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
 
     const focusedReport = reports.find(report => report.id === focusReportId);
     if (focusedReport) {
-      setSelectedWeekKey(formatDateKey(getWeekStart(getReportDate(focusedReport))));
+      setSelectedDateKey(formatDateKey(getReportDate(focusedReport)));
       setSelectedStoreName(focusedReport.storeName || '');
     }
     setExpandedReportId(focusReportId);
@@ -979,6 +1090,11 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
 
   const toggleExpand = (id) => {
     setExpandedReportId(prev => prev === id ? null : id);
+  };
+
+  const handleDateChange = dateKey => {
+    setSelectedDateKey(dateKey);
+    setSelectedStoreName('');
   };
 
   const handleCopyText = (id, text) => {
@@ -1025,8 +1141,9 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
       {reports.length > 0 && (
         <HistorySummary
           summaries={weeklySummaries}
-          selectedWeekKey={selectedWeekKey}
-          onWeekChange={setSelectedWeekKey}
+          reports={reports}
+          selectedDateKey={activeDateKey}
+          onDateChange={handleDateChange}
           selectedStoreName={selectedStoreName}
           onStoreChange={setSelectedStoreName}
         />
@@ -1034,7 +1151,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
 
       {reports.length > 0 && (
         <div className="history-report-period">
-          <span>Chi tiết report của {selectedStoreName || 'cửa hàng đã chọn'}</span>
+          <span>Báo cáo ngày {formatShortDate(parseDateKey(activeDateKey))}/{parseDateKey(activeDateKey).getFullYear()} {selectedStoreName ? `· ${selectedStoreName}` : '· tất cả cửa hàng'}</span>
           <strong>{visibleReports.length} bản báo cáo</strong>
         </div>
       )}
@@ -1060,7 +1177,13 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
         </div>
       ) : (
         <div className="space-y-4">
-          {visibleReports.map(report => {
+          {visibleReports.length === 0 ? (
+            <div className="history-day-empty">
+              <Calendar size={18} />
+              <strong>Chưa có báo cáo trong ngày này</strong>
+              <span>Hãy chọn ngày có dấu số báo cáo trên lịch để mở bản lưu.</span>
+            </div>
+          ) : visibleReports.map(report => {
             const isExpanded = expandedReportId === report.id;
             const isCopied = copiedId === report.id;
 
