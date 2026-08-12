@@ -565,6 +565,77 @@ const getDayKeyFromDate = (date) => {
   return HISTORY_DAYS[day === 0 ? 6 : day - 1].key;
 };
 
+const formatFullDate = date => date.toLocaleDateString('vi-VN', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+
+const getDailyShiftAssignments = (report, date) => {
+  const dayKey = getDayKeyFromDate(date);
+  const baseShifts = report.todayShifts || {};
+  const employeeRoster = report.employeeScheduleRoster;
+  const codeByShift = { morning: 'A', middle: 'M', afternoon: 'B' };
+
+  if (employeeRoster?.employees?.length > 0) {
+    const getEmployeeNames = code => (employeeRoster.employees || [])
+      .filter(employee => employeeRoster.days?.[dayKey]?.[employee.id] === code)
+      .map(employee => employee.name)
+      .filter(Boolean)
+      .join(', ');
+
+    return {
+      ...baseShifts,
+      morning: getEmployeeNames(codeByShift.morning),
+      middle: getEmployeeNames(codeByShift.middle),
+      afternoon: getEmployeeNames(codeByShift.afternoon)
+    };
+  }
+
+  const weeklyRoster = report.weeklyShiftsRoster;
+  if (weeklyRoster) {
+    const getLegacyNames = shiftKey => {
+      const value = weeklyRoster[shiftKey]?.[dayKey] || '';
+      return value.split(';;').filter(name => name.trim()).join(', ');
+    };
+
+    return {
+      ...baseShifts,
+      morning: getLegacyNames('morning'),
+      middle: getLegacyNames('middle'),
+      afternoon: getLegacyNames('afternoon')
+    };
+  }
+
+  return baseShifts;
+};
+
+const buildWeeklyReportViews = (reports, selectedDateKey, selectedStoreName) => {
+  const selectedDate = parseDateKey(selectedDateKey);
+  const weekKey = formatDateKey(getWeekStart(selectedDate));
+  const weeklyReports = reports
+    .filter(report => (
+      formatDateKey(getWeekStart(getReportDate(report))) === weekKey
+      && (!selectedStoreName || report.storeName === selectedStoreName)
+    ))
+    .sort((a, b) => getReportDate(a) - getReportDate(b));
+
+  const templateByStore = new Map();
+  weeklyReports.forEach(report => {
+    const storeKey = report.storeName || report.id;
+    if (!templateByStore.has(storeKey)) templateByStore.set(storeKey, report);
+  });
+
+  return Array.from(templateByStore.values()).map(report => ({
+    ...report,
+    date: `${selectedDateKey}T12:00:00.000Z`,
+    dateStr: formatFullDate(selectedDate),
+    todayShifts: getDailyShiftAssignments(report, selectedDate),
+    isWeeklyTemplate: formatDateKey(getReportDate(report)) !== selectedDateKey
+  }));
+};
+
 const countStaff = (value) => {
   if (typeof value !== 'string' || !value.trim()) return 0;
   return value.includes(';;')
@@ -723,6 +794,11 @@ function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, sel
     map[dateKey] = (map[dateKey] || 0) + 1;
     return map;
   }, {});
+  const reportsByWeek = reports.reduce((map, report) => {
+    const weekKey = formatDateKey(getWeekStart(getReportDate(report)));
+    map[weekKey] = (map[weekKey] || new Set()).add(report.storeName || report.id);
+    return map;
+  }, {});
 
   const [calendarMonth, setCalendarMonth] = useState(
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
@@ -803,7 +879,8 @@ function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, sel
           ))}
           {getCalendarDays(calendarMonth).map(day => {
             const dayKey = formatDateKey(day);
-            const reportCount = reportsByDate[dayKey] || 0;
+            const weekKey = formatDateKey(getWeekStart(day));
+            const reportCount = reportsByDate[dayKey] || reportsByWeek[weekKey]?.size || 0;
             const isCurrentMonth = day.getMonth() === calendarMonth.getMonth();
             const isSelected = dayKey === selectedDateKey;
             const isSelectedWeek = formatDateKey(getWeekStart(day)) === selectedWeekKey;
@@ -1059,12 +1136,10 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
   const activeDateKey = selectedDateKey || latestReportDateKey;
   const selectedWeekKey = formatDateKey(getWeekStart(parseDateKey(activeDateKey)));
   const selectedWeekSummary = weeklySummaries.find(week => week.key === selectedWeekKey);
-  const visibleReports = useMemo(() => (
-    reports.filter(report => (
-      formatDateKey(getReportDate(report)) === activeDateKey
-      && (!selectedStoreName || report.storeName === selectedStoreName)
-    ))
-  ), [activeDateKey, reports, selectedStoreName]);
+  const visibleReports = useMemo(
+    () => buildWeeklyReportViews(reports, activeDateKey, selectedStoreName),
+    [activeDateKey, reports, selectedStoreName]
+  );
 
   useEffect(() => {
     if (reports.length > 0 && !selectedDateKey) {
@@ -1225,7 +1300,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                   <div className="history-header-right">
                     <div>
                       <span className="history-header-badge">
-                        Mở cửa: {report.progress.percent}%
+                        {report.isWeeklyTemplate ? 'Bản ghi dùng chung tuần' : `Mở cửa: ${report.progress.percent}%`}
                       </span>
                     </div>
                     <div className="history-header-actions">
@@ -1250,13 +1325,15 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                       >
                         {isCopied ? <Check size={14} /> : <Copy size={14} />}
                       </button>
-                      <button
-                        onClick={(e) => confirmDelete(e, report.id)}
-                        className="history-action-btn-delete"
-                        title="Xóa báo cáo"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {!report.isWeeklyTemplate && (
+                        <button
+                          onClick={(e) => confirmDelete(e, report.id)}
+                          className="history-action-btn-delete"
+                          title="Xóa báo cáo"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                       <span className="history-header-eye">
                         {isExpanded ? <EyeOff size={14} /> : <Eye size={14} />}
                       </span>
