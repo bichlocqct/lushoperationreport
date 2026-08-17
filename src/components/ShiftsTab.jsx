@@ -55,14 +55,21 @@ const formatWeekDayLabel = (weekKey, dayIndex) => {
   return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
 };
 
-const getWeekOptions = () => {
+const getWeekOptions = (storedWeekKeys = []) => {
   const currentWeek = getWeekStartDate(new Date());
-  return Array.from({ length: 17 }, (_, index) => {
+  const weekKeys = new Set(Array.from({ length: 17 }, (_, index) => {
     const start = new Date(currentWeek);
     start.setDate(currentWeek.getDate() + (index - 8) * 7);
-    const key = getWeekKey(start);
-    return { key, label: formatWeekLabel(key) };
-  });
+    return getWeekKey(start);
+  }));
+
+  storedWeekKeys
+    .filter(weekKey => /^\d{4}-\d{2}-\d{2}$/.test(weekKey))
+    .forEach(weekKey => weekKeys.add(weekKey));
+
+  return Array.from(weekKeys)
+    .sort()
+    .map(key => ({ key, label: formatWeekLabel(key) }));
 };
 
 const cloneRoster = roster => ({
@@ -238,7 +245,6 @@ export default function ShiftsTab({
 }) {
   const selectedStore = STORES.find(store => store.id === selectedStoreId) || STORES[0];
   const currentWeekKey = getWeekKey(new Date());
-  const weekOptions = useMemo(() => getWeekOptions(), []);
   const [selectedWeekKey, setSelectedWeekKey] = useState(
     () => employeeRoster[selectedStoreId]?.activeWeekKey || currentWeekKey
   );
@@ -263,6 +269,9 @@ export default function ShiftsTab({
   );
 
   const storeEmployeeRoster = employeeRoster[selectedStoreId] || null;
+  const storedWeekKeys = Object.keys(storeEmployeeRoster?.weeks || {});
+  const weekOptions = getWeekOptions(storedWeekKeys);
+  const savedWeekCount = storedWeekKeys.length;
   const activeEmployeeRoster = getRosterForWeek(
     storeEmployeeRoster,
     selectedWeekKey,
@@ -443,18 +452,34 @@ export default function ShiftsTab({
   };
 
   const handleResetEmployeeRoster = () => {
-    if (!window.confirm('Đặt lại toàn bộ bảng phân ca của cửa hàng này?')) return;
+    if (!window.confirm('Đặt lại lịch của tuần đang chọn? Các tuần đã lưu khác vẫn được giữ lại.')) return;
 
     setEmployeeRoster(prev => {
-      const next = { ...prev };
-      delete next[selectedStoreId];
-      return next;
-    });
+      const storedRoster = prev[selectedStoreId] || {};
+      const currentRoster = getRosterForWeek(
+        storedRoster,
+        selectedWeekKey,
+        currentWeekKey,
+        legacyRoster
+      );
+      const resetRoster = {
+        employees: (currentRoster.employees || []).map(employee => ({ ...employee })),
+        days: {}
+      };
 
-    setWeeklyShifts(prev => {
-      const next = { ...prev };
-      delete next[selectedStoreId];
-      return next;
+      return {
+        ...prev,
+        [selectedStoreId]: {
+          ...storedRoster,
+          activeWeekKey: selectedWeekKey,
+          employees: resetRoster.employees,
+          days: resetRoster.days,
+          weeks: {
+            ...(storedRoster.weeks || {}),
+            [selectedWeekKey]: resetRoster
+          }
+        }
+      };
     });
   };
 
@@ -568,7 +593,11 @@ export default function ShiftsTab({
               </select>
               <ChevronDown size={14} aria-hidden="true" />
             </div>
-            <small>Lịch tuần này được lưu độc lập.</small>
+            <small>
+              {savedWeekCount > 0
+                ? `${savedWeekCount} tuần đã lưu · Lịch cũ được giữ lại.`
+                : 'Lịch tuần này được lưu độc lập.'}
+            </small>
           </div>
           <div className="shift-roster-actions">
             <button type="button" onClick={addEmployee} className="shift-add-employee-button">
