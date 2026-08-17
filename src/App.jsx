@@ -153,8 +153,10 @@ export default function App() {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [historyFocusId, setHistoryFocusId] = useState(null);
 
-  const openReportModal = (dateKey = new Date().toISOString().split('T')[0]) => {
-    setReportDate(dateKey);
+  const openReportModal = (dateKey = '') => {
+    const selectedScheduleWeek = employeeRoster[selectedStoreId]?.activeWeekKey;
+    const nextReportDate = dateKey || selectedScheduleWeek || new Date().toISOString().split('T')[0];
+    setReportDate(nextReportDate);
     setIsReportModalOpen(true);
   };
 

@@ -6,6 +6,22 @@ const SCHEDULE_CODE_LABELS = {
   CA3: 'CA 3'
 };
 
+const getWeekStart = value => {
+  const date = new Date(value);
+  date.setHours(0, 0, 0, 0);
+  const day = date.getDay();
+  date.setDate(date.getDate() - (day === 0 ? 6 : day - 1));
+  return date;
+};
+
+const formatWeekLabel = value => {
+  const start = getWeekStart(value);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const format = date => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+  return `${format(start)} – ${format(end)}/${end.getFullYear()}`;
+};
+
 /**
  * Generates a self-contained, beautifully styled black-and-white HTML webpage for the daily operations report.
  * It is styled as a professional shift log form utilizing the Roboto font.
@@ -17,6 +33,9 @@ export function generateReportHTML(reportData, template = 'standard') {
   const {
     storeName,
     dateStr,
+    date,
+    weekKey,
+    weekLabel,
     leader = '',
     progress = { completed: 0, total: 0, percent: 0 },
     rosterShelf = [],
@@ -33,6 +52,7 @@ export function generateReportHTML(reportData, template = 'standard') {
     employeeScheduleRoster,
     fileName
   } = reportData;
+  const reportWeekLabel = weekLabel || formatWeekLabel(weekKey || date || dateStr);
 
   // Process opening checklists issues
   const openingIssues = OPENING_CHECKLIST_TEMPLATE.filter(item => openingNotes[item.id]).map(item => ({
@@ -684,8 +704,8 @@ export function generateReportHTML(reportData, template = 'standard') {
         <span class="field-value">${storeName}</span>
       </div>
       <div class="form-field">
-        <span class="field-label">Ngày thực hiện / Date Record</span>
-        <span class="field-value">${dateStr}</span>
+        <span class="field-label">Tuần báo cáo / Report Week</span>
+        <span class="field-value">${reportWeekLabel}</span>
       </div>
     </div>
 

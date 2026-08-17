@@ -6,7 +6,7 @@ import { KPI_TEMPLATES, OPENING_CHECKLIST_TEMPLATE, SELLING_HOUR_TEMPLATE } from
 // Native React Form Preview Component for visual presentation inside HistoryTab
 const FormPreview = ({
   storeName,
-  dateStr,
+  weekLabel,
   leader,
   rosterShelf,
   rosterPos,
@@ -109,8 +109,8 @@ const FormPreview = ({
           <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{storeName}</span>
         </div>
         <div style={{ padding: '6px 10px', borderRight: '1.5px solid #000000' }}>
-          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Ngày thực hiện / Date Record</span>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{dateStr}</span>
+          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Tuần báo cáo / Report Week</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{weekLabel}</span>
         </div>
         <div style={{ padding: '6px 10px' }}>
           <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Leader Ca / Shift Leader</span>
@@ -526,15 +526,35 @@ const formatShortDate = (date) => (
   `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`
 );
 
-const formatReportDateLabel = (report) => {
-  if (!report?.date && report?.dateStr) return report.dateStr;
-  return getReportDate(report).toLocaleDateString('vi-VN', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+const getReportWeekKey = report => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(report?.weekKey || '')) return report.weekKey;
+  return formatDateKey(getWeekStart(getReportDate(report)));
 };
+
+const formatWeekLabel = weekKey => {
+  const start = parseDateKey(weekKey);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return `${formatShortDate(start)} – ${formatShortDate(end)}/${end.getFullYear()}`;
+};
+
+const getHistoryWeekOptions = (summaries, selectedWeekKey) => {
+  const currentWeek = getWeekStart(new Date());
+  const weekKeys = new Set(Array.from({ length: 17 }, (_, index) => {
+    const weekStart = new Date(currentWeek);
+    weekStart.setDate(currentWeek.getDate() + (index - 8) * 7);
+    return formatDateKey(weekStart);
+  }));
+
+  summaries.forEach(week => weekKeys.add(week.key));
+  if (selectedWeekKey) weekKeys.add(selectedWeekKey);
+
+  return Array.from(weekKeys).sort().reverse();
+};
+
+const formatReportWeekLabel = report => (
+  report?.weekLabel || formatWeekLabel(getReportWeekKey(report))
+);
 
 const parseDateKey = (dateKey) => {
   if (!dateKey) return new Date();
@@ -611,12 +631,12 @@ const getDailyShiftAssignments = (report, date) => {
   return baseShifts;
 };
 
-const buildWeeklyReportViews = (reports, selectedDateKey, selectedStoreName) => {
+const buildWeeklyReportViews = (reports, selectedDateKey, selectedWeekKey, selectedStoreName) => {
   const selectedDate = parseDateKey(selectedDateKey);
-  const weekKey = formatDateKey(getWeekStart(selectedDate));
+  const weekKey = selectedWeekKey || formatDateKey(getWeekStart(selectedDate));
   const weeklyReports = reports
     .filter(report => (
-      formatDateKey(getWeekStart(getReportDate(report))) === weekKey
+      getReportWeekKey(report) === weekKey
       && (!selectedStoreName || report.storeName === selectedStoreName)
     ))
     .sort((a, b) => getReportDate(a) - getReportDate(b));
@@ -631,6 +651,8 @@ const buildWeeklyReportViews = (reports, selectedDateKey, selectedStoreName) => 
     ...report,
     date: `${selectedDateKey}T12:00:00.000Z`,
     dateStr: formatFullDate(selectedDate),
+    weekKey,
+    weekLabel: formatWeekLabel(weekKey),
     todayShifts: getDailyShiftAssignments(report, selectedDate),
     isWeeklyTemplate: formatDateKey(getReportDate(report)) !== selectedDateKey
   }));
@@ -705,8 +727,8 @@ const buildWeeklySummaries = (reports) => {
 
   reports.forEach(report => {
     const reportDate = getReportDate(report);
-    const weekStart = getWeekStart(reportDate);
-    const weekKey = formatDateKey(weekStart);
+    const weekKey = getReportWeekKey(report);
+    const weekStart = parseDateKey(weekKey);
     const storeName = report.storeName || 'Chưa xác định cửa hàng';
 
     if (!weekMap.has(weekKey)) {
@@ -785,17 +807,17 @@ const buildWeeklySummaries = (reports) => {
     });
 };
 
-function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, selectedStoreName, onStoreChange }) {
+function HistorySummary({ summaries, reports, selectedDateKey, selectedWeekKey, onDateChange, onWeekChange, selectedStoreName, onStoreChange }) {
   const selectedDate = parseDateKey(selectedDateKey);
-  const selectedWeekKey = formatDateKey(getWeekStart(selectedDate));
   const selectedWeek = summaries.find(week => week.key === selectedWeekKey);
+  const weekOptions = getHistoryWeekOptions(summaries, selectedWeekKey);
   const reportsByDate = reports.reduce((map, report) => {
     const dateKey = formatDateKey(getReportDate(report));
     map[dateKey] = (map[dateKey] || 0) + 1;
     return map;
   }, {});
   const reportsByWeek = reports.reduce((map, report) => {
-    const weekKey = formatDateKey(getWeekStart(getReportDate(report)));
+    const weekKey = getReportWeekKey(report);
     map[weekKey] = (map[weekKey] || new Set()).add(report.storeName || report.id);
     return map;
   }, {});
@@ -837,12 +859,24 @@ function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, sel
           <div>
             <span className="history-summary-eyebrow">Tổng hợp vận hành</span>
             <h3>Bản ghi vận hành theo ngày</h3>
-            <p>Chọn từng ngày để xem các bản report đã lưu và tổng hợp nhân sự trong tuần.</p>
+            <p>Chọn tuần báo cáo để xem bản report đã lưu và lịch trực tương ứng.</p>
           </div>
         </div>
-        <div className="history-selected-date-label">
-          <span>Ngày đang xem</span>
-          <strong>{formatShortDate(selectedDate)}/{selectedDate.getFullYear()}</strong>
+        <div className="history-week-select">
+          <span>Tuần báo cáo</span>
+          <div>
+            <Calendar size={14} />
+            <select
+              value={selectedWeekKey}
+              onChange={event => onWeekChange(event.target.value)}
+              aria-label="Chọn tuần báo cáo"
+            >
+              {weekOptions.map(weekKey => (
+                <option key={weekKey} value={weekKey}>{formatWeekLabel(weekKey)}</option>
+              ))}
+            </select>
+            <ChevronDown size={14} aria-hidden="true" />
+          </div>
         </div>
       </div>
 
@@ -851,9 +885,9 @@ function HistorySummary({ summaries, reports, selectedDateKey, onDateChange, sel
           <div>
             <div className="history-subheading">
               <Calendar size={15} />
-              <span>Chọn ngày báo cáo</span>
+              <span>Xem từng ngày trong tuần</span>
             </div>
-            <p>Chọn một ngày để xem đúng các bản report được lưu trong ngày đó.</p>
+            <p>Lịch bên dưới giúp kiểm tra từng ngày trong tuần đang chọn.</p>
           </div>
           <div className="history-calendar-controls">
             <button
@@ -1129,23 +1163,29 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
   const [previewFormat, setPreviewFormat] = useState('web'); // Default to 'web' for beautiful layout
   const weeklySummaries = useMemo(() => buildWeeklySummaries(reports), [reports]);
   const [selectedDateKey, setSelectedDateKey] = useState('');
+  const [selectedWeekKey, setSelectedWeekKey] = useState('');
   const [selectedStoreName, setSelectedStoreName] = useState('');
   const latestReportDateKey = reports.length > 0
     ? formatDateKey(getReportDate(reports[0]))
     : formatDateKey(new Date());
-  const activeDateKey = selectedDateKey || latestReportDateKey;
-  const selectedWeekKey = formatDateKey(getWeekStart(parseDateKey(activeDateKey)));
-  const selectedWeekSummary = weeklySummaries.find(week => week.key === selectedWeekKey);
+  const latestReportWeekKey = reports.length > 0
+    ? getReportWeekKey(reports[0])
+    : formatDateKey(getWeekStart(new Date()));
+  const activeWeekKey = selectedWeekKey || latestReportWeekKey;
+  const activeDateKey = selectedDateKey || activeWeekKey || latestReportDateKey;
+  const selectedWeekSummary = weeklySummaries.find(week => week.key === activeWeekKey);
   const visibleReports = useMemo(
-    () => buildWeeklyReportViews(reports, activeDateKey, selectedStoreName),
-    [activeDateKey, reports, selectedStoreName]
+    () => buildWeeklyReportViews(reports, activeDateKey, activeWeekKey, selectedStoreName),
+    [activeDateKey, activeWeekKey, reports, selectedStoreName]
   );
 
   useEffect(() => {
-    if (reports.length > 0 && !selectedDateKey) {
-      setSelectedDateKey(formatDateKey(getReportDate(reports[0])));
+    if (reports.length > 0 && (!selectedDateKey || !selectedWeekKey)) {
+      const latestReport = reports[0];
+      if (!selectedDateKey) setSelectedDateKey(formatDateKey(getReportDate(latestReport)));
+      if (!selectedWeekKey) setSelectedWeekKey(getReportWeekKey(latestReport));
     }
-  }, [reports, selectedDateKey]);
+  }, [reports, selectedDateKey, selectedWeekKey]);
 
   useEffect(() => {
     const stores = selectedWeekSummary?.stores || [];
@@ -1160,6 +1200,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
     const focusedReport = reports.find(report => report.id === focusReportId);
     if (focusedReport) {
       setSelectedDateKey(formatDateKey(getReportDate(focusedReport)));
+      setSelectedWeekKey(getReportWeekKey(focusedReport));
       setSelectedStoreName(focusedReport.storeName || '');
     }
     setExpandedReportId(focusReportId);
@@ -1179,6 +1220,13 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
 
   const handleDateChange = dateKey => {
     setSelectedDateKey(dateKey);
+    setSelectedWeekKey(formatDateKey(getWeekStart(parseDateKey(dateKey))));
+    setSelectedStoreName('');
+  };
+
+  const handleWeekChange = weekKey => {
+    setSelectedWeekKey(weekKey);
+    setSelectedDateKey(weekKey);
     setSelectedStoreName('');
   };
 
@@ -1228,7 +1276,9 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
           summaries={weeklySummaries}
           reports={reports}
           selectedDateKey={activeDateKey}
+          selectedWeekKey={activeWeekKey}
           onDateChange={handleDateChange}
+          onWeekChange={handleWeekChange}
           selectedStoreName={selectedStoreName}
           onStoreChange={setSelectedStoreName}
         />
@@ -1236,7 +1286,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
 
       {reports.length > 0 && (
         <div className="history-report-period">
-          <span>Bản ghi vận hành ngày {formatShortDate(parseDateKey(activeDateKey))}/{parseDateKey(activeDateKey).getFullYear()} {selectedStoreName ? `· ${selectedStoreName}` : '· tất cả cửa hàng'}</span>
+          <span>Bản ghi vận hành tuần {formatWeekLabel(activeWeekKey)} {selectedStoreName ? `· ${selectedStoreName}` : '· tất cả cửa hàng'}</span>
           <strong>{visibleReports.length} bản báo cáo</strong>
         </div>
       )}
@@ -1252,7 +1302,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
               Sau khi điền thông số ca và hoàn tất checklist, bạn hãy chọn "Xuất Báo Cáo" ở góc dưới bên trái của menu chính hoặc bấm trực tiếp nút bên dưới để tạo báo cáo.
             </p>
             <button
-              onClick={() => onOpenExportModal(activeDateKey)}
+              onClick={() => onOpenExportModal(activeWeekKey)}
               className="btn-black text-xs py-2 px-6 flex items-center justify-center gap-1.5 mt-2"
             >
               <FileText size={14} />
@@ -1265,11 +1315,11 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
           {visibleReports.length === 0 ? (
             <div className="history-day-empty">
               <Calendar size={18} />
-              <strong>Bản ghi vận hành ngày {formatShortDate(parseDateKey(activeDateKey))}/{parseDateKey(activeDateKey).getFullYear()}</strong>
-              <span>Chưa có report được lưu trong ngày này. Bạn có thể tạo bản ghi ngay cho ngày đang chọn.</span>
-              <button type="button" onClick={() => onOpenExportModal(activeDateKey)}>
+              <strong>Bản ghi vận hành tuần {formatWeekLabel(activeWeekKey)}</strong>
+              <span>Chưa có report được lưu trong tuần này. Bạn có thể tạo bản ghi ngay cho tuần đang chọn.</span>
+              <button type="button" onClick={() => onOpenExportModal(activeWeekKey)}>
                 <FileText size={14} />
-                Tạo bản ghi ngày này
+                Tạo bản ghi tuần này
               </button>
             </div>
           ) : visibleReports.map(report => {
@@ -1293,7 +1343,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                     </div>
                     <div className="history-header-details">
                       <strong className="history-header-store">{report.storeName}</strong>
-                      <span className="history-header-date">{formatReportDateLabel(report)}</span>
+                      <span className="history-header-date">Tuần báo cáo: {formatReportWeekLabel(report)}</span>
                     </div>
                   </div>
 
@@ -1443,7 +1493,7 @@ export default function HistoryTab({ reports, onDeleteReport, onOpenExportModal,
                     <div className="bg-white border border-border-medium rounded-none" style={{ height: '55vh', overflowY: 'auto' }}>
                       <FormPreview 
                         storeName={report.storeName}
-                        dateStr={formatReportDateLabel(report)}
+                        weekLabel={formatReportWeekLabel(report)}
                         leader={report.leader}
                         rosterShelf={report.rosterShelf}
                         rosterPos={report.rosterPos}

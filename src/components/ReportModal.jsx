@@ -21,10 +21,18 @@ const getWeekKey = date => {
   return `${year}-${month}-${dateNumber}`;
 };
 
+const formatWeekLabel = weekKey => {
+  const start = new Date(`${weekKey}T12:00:00`);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const format = date => `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+  return `${format(start)} – ${format(end)}/${end.getFullYear()}`;
+};
+
 // Native React Form Preview Component for visual presentation inside the app
 const FormPreview = ({
   storeName,
-  dateStr,
+  weekLabel,
   leader,
   rosterShelf,
   rosterPos,
@@ -116,8 +124,8 @@ const FormPreview = ({
           <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{storeName}</span>
         </div>
         <div style={{ padding: '6px 10px', borderRight: '1.5px solid #000000' }}>
-          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Ngày thực hiện / Date Record</span>
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{dateStr}</span>
+          <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Tuần báo cáo / Report Week</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000' }}>{weekLabel}</span>
         </div>
         <div style={{ padding: '6px 10px' }}>
           <span style={{ fontSize: '7.5px', fontWeight: 800, textTransform: 'uppercase', color: '#52525b', display: 'block', marginBottom: '2px', letterSpacing: '0.05em' }}>Leader Ca / Shift Leader</span>
@@ -558,6 +566,7 @@ export default function ReportModal({
 
   const storeEmployeeRoster = employeeRoster[activeStore.id] || null;
   const reportWeekKey = getWeekKey(selectedReportDate);
+  const weekLabel = formatWeekLabel(reportWeekKey);
   const employeeScheduleRoster = storeEmployeeRoster?.weeks?.[reportWeekKey]
     || (storeEmployeeRoster && !storeEmployeeRoster.weeks ? storeEmployeeRoster : null);
 
@@ -616,6 +625,8 @@ export default function ReportModal({
   const previewReportData = {
     storeName,
     dateStr: todayStr,
+    weekKey: reportWeekKey,
+    weekLabel,
     leader,
     progress: {
       completed: completedOpening,
@@ -641,7 +652,7 @@ export default function ReportModal({
     let text = `🌿 *BÁO CÁO VẬN HÀNH HÀNG NGÀY - LUSH RETAIL* 🌿\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━\n`;
     text += `📍 *Cửa hàng:* ${storeName}\n`;
-    text += `📅 *Ngày:* ${todayStr}\n`;
+    text += `📅 *Tuần báo cáo:* ${weekLabel}\n`;
     if (leader) {
       text += `👤 *Leader ca:* ${leader}\n`;
     }
@@ -847,6 +858,8 @@ export default function ReportModal({
       leader,
       date: savedReportDate,
       dateStr: todayStr,
+      weekKey: reportWeekKey,
+      weekLabel,
       template: reportTemplate,
       progress: {
         completed: completedOpening,
@@ -965,7 +978,7 @@ export default function ReportModal({
           <div className="rounded-none">
             <FormPreview 
               storeName={storeName}
-              dateStr={todayStr}
+              weekLabel={weekLabel}
               leader={leader}
               rosterShelf={rosterShelf}
               rosterPos={rosterPos}
